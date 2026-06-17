@@ -1,6 +1,6 @@
 # mercator-sync
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.13+-blue?logo=python&logoColor=white)
 ![Mercator](https://img.shields.io/badge/Mercator-API-4A90D9?logo=data:image/svg+xml;base64,)
 ![Status](https://img.shields.io/badge/Statut-En%20développement-orange)
 
