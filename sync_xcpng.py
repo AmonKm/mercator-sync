@@ -40,8 +40,8 @@ def construire_payload(detail:dict)->dict: # Mapping des champs Mercator -> XOA,
 # Connexion à Mercator
 BASE_URL_MERCATOR = "https://mercator.exemple.com" # URL de base de Mercator
 print("Login")
-login = 'VOTRE LOGIN ADMIN' # Compte pour accéder à l'API
-password = getpass.getpass('Mot de passe Mercator : ') # Demande le mdp du compte
+login = 'VOTRE LOGIN ADMIN' # Compte Mercator pour accéder à l'API
+password = getpass.getpass('Mot de passe Mercator : ') # Demande le mot de passe du compte
 
 vheaders = {
     'accept': 'application/json',
@@ -49,7 +49,7 @@ vheaders = {
     'cache-control': 'no-cache'
 }
 
-response = requests.post( #Permet de récupérer le token API
+response = requests.post( # Permet de récupérer le token API
     f'{BASE_URL_MERCATOR}/api/login',
     headers=vheaders,
     json={'login': login, 'password': password}
@@ -90,7 +90,7 @@ vms = response.json()
 # --------------------------------------------------------------------------------------------------
 # Requête finale
 print("Les VMs :")
-for vm in vms: #Pour toutes les vms de la requête XOA :
+for vm in vms: # Pour toutes les vms de la requête XOA :
     detail = requests.get(f"{BASE_URL_XOA}{vm['href']}", headers=headers, verify=False, timeout=10).json() # On récupère les infos de la vm qu'on parcourt, le href est l'id
     payload = construire_payload(detail) # On construit son payload (mapping avec les champs mercator)
 
