@@ -69,7 +69,7 @@ pip install requests
 | 41 | `BASE_URL_MERCATOR` | URL de l'instance Mercator |
 | 43 | `login` | Login du compte admin Mercator |
 | 77 | `BASE_URL_XOA` | URL de l'instance XOA |
-| 84 | `$pool:[ID_DU_POOL]` | ID du pool XCP-ng à synchroniser si nécessaire |
+| 85 | `$pool:[ID_DU_POOL]` | ID du pool XCP-ng à synchroniser si nécessaire |
 
 Au lancement, le script demande interactivement :
 - le mot de passe du compte Mercator
