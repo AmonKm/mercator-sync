@@ -4,8 +4,9 @@
 ![Mercator](https://img.shields.io/badge/Mercator-API-4A90D9?logo=data:image/svg+xml;base64,)
 ![Status](https://img.shields.io/badge/Statut-En%20développement-orange)
 
-Synchronisation des machines virtuelles XCP-ng/XOA vers [Mercator](https://github.com/dbarzin/mercator) par réconciliation sur l'attribut `xcpng_id:`.
-En projet : Synchronisation des machines virtuelles Vcenter (VMware)
+Synchronisation des machines virtuelles et des clusters de différentes sources vers Mercator :
+- XOA (XCP-ng) en projet
+- Vcenter (VMware)
 
 ---
 
@@ -15,27 +16,27 @@ En projet : Synchronisation des machines virtuelles Vcenter (VMware)
 Mercator API
   │
   ▼
-Index Mercator (xcpng_id:uuid)
+Index Mercator (xcpng_id:uuid) Ou vcenter_id dans le cas de vcenter
   │
   ▼
-Récupération des VMs XOA
+Récupération des VMs
   │
   ▼
-Mapping payload → champs Mercator
+Mapping payload en fonction de la source → champs Mercator - Parcours par cluster
   │
-  ├── xcpng_id connu → PATCH sur Mercator (mise à jour)
-  └── xcpng_id inconnu → POST sur Mercator (création)
+  ├── id connu → PATCH sur Mercator (mise à jour)
+  └── id inconnu → POST sur Mercator (création)
 ```
 
 Le script suit trois étapes :
 
-1. **Index** : interroge l'API Mercator pour récupérer tous les serveurs logiques dont l'attribut contient un tag `xcpng_id:`, et construit une table de réconciliation `{ uuid_xcpng → id_mercator }`.
-2. **Collecte** : interroge l'API REST XOA pour lister les VMs du pool cible avec leurs détails (CPU, mémoire, OS, IP, tags). (L'id du pool peut ne pas être précisé.
+1. **Index** : interroge l'API Mercator pour récupérer tous les serveurs logiques dont l'attribut contient un tag `xcpng_id:` ou `vcenter_id`, et construit une table de réconciliation `{ uuid → id_mercator }`.
+2. **Collecte** : interroge l'API REST de la source pour lister les VMs avec leurs détails (CPU, mémoire, OS, IP, tags) et le cluster associé.
 3. **Upsert** : pour chaque VM, construit un payload mappé sur les champs Mercator. Si l'`uuid` est présent dans l'index, la VM est mise à jour (`PATCH`). Sinon, elle est créée (`POST`) avec le tag `xcpng_id:<uuid>` dans le champ attribut.
 
 ---
 
-## Champs synchronisés
+## Champs synchronisés # A revoir depuis la nouvelle version avec Vcenter + Orch
 Ce tableau est amené à évoluer :
 | XOA | Mercator |
 |-----|----------|
@@ -52,7 +53,7 @@ Ce tableau est amené à évoluer :
 
 ## Installation
 
-```bash
+```bash # En cours
 git clone https://github.com/AmonKm/mercator-sync
 cd mercator-sync
 pip install requests
@@ -60,8 +61,8 @@ pip install requests
 
 ---
 
-## Configuration
-
+## Configuration 
+Se base désormais sur un .env et un fichier yml !
 > Un `.env.example` sera disponible prochainement. En attendant, les champs à modifier sont directement dans le script :
 
 | Ligne | Champ | Description |
