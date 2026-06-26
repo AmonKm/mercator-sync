@@ -11,20 +11,5 @@ Synchronisation des machines virtuelles et des clusters de différentes sources 
 ---
 
 ## Fonctionnement
-
-```
-Mercator API
-  │
-  ▼
-Index Mercator (xcpng_id:uuid) Ou vcenter_id dans le cas de vcenter
-  │
-  ▼
-Récupération des VMs
-  │
-  ▼
-Mapping payload en fonction de la source → champs Mercator - Parcours par cluster
-  │
-  ├── id connu → PATCH sur Mercator (mise à jour)
-  └── id inconnu → POST sur Mercator (création)
-```
-## En construction ! :D
+Beau schéma en construction (le précédent était très peu visuel...)
+## En construction pour le reste ! :D
