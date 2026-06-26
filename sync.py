@@ -181,7 +181,7 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
 # Entrée
 # ---------------------------------------------------------------------------
 
-def main():
+def main(): # regarder la doc si possible de faire +
     parser = argparse.ArgumentParser()
     parser.add_argument("--config",  default="config/sources.yaml")
     parser.add_argument("--source",  default=None, help="Nom d'une source précise")
