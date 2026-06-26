@@ -25,9 +25,7 @@ class BaseConnector(ABC):
     @abstractmethod
     def enrich_vm(self, vm_id: str, vm: dict) -> dict:
         """
-        Ajoute les détails guest (IP, OS...) au dict VM brut.
-        Peut déclencher des appels supplémentaires (vCenter)
-        ou ne rien faire si tout est déjà présent (XOA).
+        Ajoute les détails guest, redéfinir les champs ! En cours de modif.
         """
         ...
 
