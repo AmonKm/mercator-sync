@@ -76,7 +76,7 @@ def sync_applications_mercator():
     f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables",
     headers=headers
     )
-    print(r.json())
+    print(requete.json())
 
     print(requete2.status_code, requete2.text)
 sync_applications_mercator()
@@ -205,9 +205,8 @@ def get_grist_app_index():
     for record in r.json()["records"]:
         index[record["id"]] = record["fields"]["mercator_id"]
     return index
-
+grist_app_index = get_grist_app_index()
 def liste_app(fields):
-    grist_app_index = get_grist_app_index()
     liste_possible_app = [
         'Application_1_concernee_par_le_traitement',
         'Application_2_concernee_par_le_traitement',
