@@ -1,58 +1,21 @@
 #!/usr/bin/python3
-import getpass
+# TODO Préciser le type des variables
+#-----------------------------------------------------------------------------
+# Import
+#-----------------------------------------------------------------------------
 import requests
+import getpass
 import datetime
-# De la meme manière faire un .env explicite pour ce doc et structurer le code 
-# Etat de test !
-BASE_URL = "mon_lien_mercator"
-
-def extract_grist_uuid(description: str) -> str | None:
-    if not description:
-        return None
-    for line in description.splitlines():
-        # print(description.splitlines())
-        if line.startswith("<p>grist_uuid:"):
-            return line.split("grist_uuid:")[1].strip()
-    return None
-
-def trouver_id(entete):
-        requête = requests.get(f"{BASE_URL}/api/data-processings", headers=entete)
-        index = {}
-        for traitement in requête.json():  # plus de ["data"]
-            description = traitement.get("description", "") or ""
-            # print(description)
-            val = extract_grist_uuid(description)
-            if val:
-                index[val] = traitement["id"]
-        return index
-
-def clean_list(val):
-    if isinstance(val, list):
-        return ", ".join(base for base in val if base != "L")
-    return val or ""
-
-def build_recipients(fields):
-    parts = []
-    for num in ["1", "2", "3", "4"]:
-        org = fields.get(f"Destinataire_{num}_Organisme", "")
-        typ = fields.get(f"Destinataire_{num}_Type", "")
-        if org:
-            parts.append(f"{org} ({typ})")
-    return ", ".join(parts)
-
-def build_transfert(fields):
-    parts = []
-    for num in ["1", "2", "3", "4"]:
-        org = fields.get(f"Destinataire_{num}_Organisme_hors_UE_", "")
-        pays = fields.get(f"Destinataire_{num}_Pays_hors_UE_", "")
-        typ = fields.get(f"Destinataire_{num}_Type_de_garanties_hors_UE_", "")
-        link = fields.get(f"Destinataire_{num}_Lien_vers_le_doc_hors_UE_", "")
-        if org:
-            parts.append(f"{org} hors UE <li><br> Pays hors UE : {pays} </br><br> Type de garanties hors UE: {typ} </br><br>Lien vers le doc hors UE: {link}</br></li>")
-    return ", ".join(parts)
-
+import re
+#-----------------------------------------------------------------------------
+# Import
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# Authentification Mercator
+#-----------------------------------------------------------------------------
+BASE_URL = "https://mercator.exemple.fr"
 print("Login")
-login = 'login_mercator'
+login = 'Mon compte admin'
 password = getpass.getpass('Mot de passe : ')
 
 vheaders = {
@@ -73,21 +36,56 @@ if response.status_code != 200:
     exit(1)
 
 vheaders['Authorization'] = "Bearer " + response.json()['access_token']
-# -------------------------------------------------------------------------------
-
-print("Tests :")
-response = requests.get(f"{BASE_URL}/api/data-processings/", headers=vheaders)
+#-----------------------------------------------------------------------------
+# Authentification Mercator
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# Authentification Grist
+#-----------------------------------------------------------------------------
 GRIST_BASE_URL = "https://grist.numerique.gouv.fr"
-GRIST_API_KEY = "TOKEN_API" # mettre un fichier env
-GRIST_DOC_ID = "ID_DU_DOCUMENT" # .env
-GRIST_TABLE_ID = "Registre_des_Fiches_de_Traitements"  # à ajuster
+GRIST_API_KEY = "TOKEN" 
+GRIST_DOC_ID = "ID du document"
+GRIST_TABLE_ID = "Registre_des_Fiches_de_Traitements"  
 
 headers = {"Authorization": f"Bearer {GRIST_API_KEY}"}
 
 url = f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/{GRIST_TABLE_ID}/records"
 response = requests.get(url, headers=headers)
 response.raise_for_status()
+#-----------------------------------------------------------------------------
+# Authentification Grist
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# Remplissage de la table app vers Grist
+#-----------------------------------------------------------------------------
+def sync_applications_mercator():
+    requête = requests.get(f"{BASE_URL}/api/applications", headers=vheaders)
+    apps = requête.json()
+    print(apps)
+    records = [
+        {"fields": {"mercator_id": app["id"], "name": app["name"]}}
+        for app in apps
+    ]
+    
+    requete2 = requests.post(
+        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/Mercator_mappage/records",
+        json={"records": records},
+        headers=headers
+    )
+    requete = requests.get(
+    f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables",
+    headers=headers
+    )
+    print(r.json())
 
+    print(requete2.status_code, requete2.text)
+sync_applications_mercator()
+#-----------------------------------------------------------------------------
+# Remplissage de la table app vers Grist
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# Variables pour Grist
+#-----------------------------------------------------------------------------
 LAWFULNESS_MAP = {
     "La personne concernée a consenti au traitement de ses données à caractère personnel pour une ou plusieurs finalités spécifiques": "lawfulness_consent",
     "Le traitement est nécessaire à l'exécution d'un contrat auquel la personne concernée est partie ou à l'exécution de mesures précontractuelles prises à la demande de celle-ci": "lawfulness_contract",
@@ -97,30 +95,144 @@ LAWFULNESS_MAP = {
     "Le traitement est nécessaire aux fins des intérêts légitimes poursuivis par le responsable du traitement ou par un tiers": "lawfulness_legitimate_interest",
 }
 
+UUID_RE = re.compile(r"grist_uuid:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})")
+
+data_collect_map = {
+    'Etat_civil_identite_donnees_d_identification_images': "Etat civil & identité", 
+    'Vie_personnelle' : "Vie personelle", 
+    'Vie_professionnelle' : "Vie professionnelle", 
+    'Informations_d_ordre_economique_et_financier': "Données économiques", 
+    'Donnees_de_connexion': "Données de connexion", 
+    'Donnees_Internet':"Données Internet", 
+    'Donnees_de_localisation':"Données de localisation", 
+    'Existe_t_il_une_zone_de_saisie_libre_':"Zone de saisie libre", 
+    'Origine_raciale_ou_ethnique': "Origine raciale/ethnique [Sensible]", 
+    'Opinions_politiques': "Opinions politiques [Sensible]", 
+    'Convictions_religieuses_ou_philosophiques': "Convictions religieuses [Sensible]",
+    'Appartenance_syndicale': "Appartenance syndicale [Sensible]", 
+    'Donnees_genetiques' : "Données génétiques [Sensible]", 
+    'Donnees_biometriques_aux_fins_d_identifier_une_personne_physique_de_maniere_unique' : "Données biométriques [Sensible]", 
+    'Donnees_concernant_la_sante':"Données de santé [Sensible]", 
+    'Vie_ou_orientation_sexuelle': "Données sexuelle [Sensible]", 
+    'Condamnations_penales_ou_infractions': "Condamnations pénales [Sensible]", 
+    'Numero_d_identification_national_unique': "NIR/INSEE [Sensible]", 
+    }
+
+ma_date = f"{datetime.datetime.now().year}-{datetime.datetime.now().month}-{datetime.datetime.now().day}"
+#-----------------------------------------------------------------------------
+# Variables pour Grist
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# Fonctions
+#-----------------------------------------------------------------------------
+
+def extract_grist_uuid(description: str) -> str | None:
+    if not description:
+        return None
+    match = UUID_RE.search(description)
+    return match.group(1) if match else None
+
+def trouver_id(entete):
+        requête = requests.get(f"{BASE_URL}/api/data-processings", headers=entete)
+        index = {}
+        for traitement in requête.json():  # plus de ["data"]
+            description = traitement.get("description", "") or ""
+            val = extract_grist_uuid(description)
+            if val:
+                index[val] = traitement["id"]
+        return index
+mon_index = trouver_id(vheaders)
+
+def clean_list(val):
+    if isinstance(val, list):
+        return [v for v in val if v != "L"]
+    return []
+
+def list_to_str(val):
+    return ", ".join(clean_list(val))
+
+def build_recipients(fields):
+    parts = []
+    for i in ["1", "2", "3", "4"]:
+        org = fields.get(f"Destinataire_{i}_Organisme", "")
+        typ = fields.get(f"Destinataire_{i}_Type", "")
+        if org:
+            parts.append(f"{org} ({typ})")
+    return "<p>" + ", ".join(parts) + "</p>" if parts else ""
+
+def build_transfert(fields):
+    parts = []
+    for i in ["1", "2", "3", "4"]:
+        org = fields.get(f"Destinataire_{i}_Organisme_hors_UE_", "")
+        pays = fields.get(f"Destinataire_{i}_Pays_hors_UE_", "")
+        typ = fields.get(f"Destinataire_{i}_Type_de_garanties_hors_UE_", "")
+        link = fields.get(f"Destinataire_{i}_Lien_vers_le_doc_hors_UE_", "")
+        if org:
+            parts.append(f"{org} hors UE <li><br> Pays hors UE : {pays} </br><br> Type de garanties hors UE: {typ} </br><br>Lien vers le doc hors UE: {link}</br></li>")
+    return "<p>" + ", ".join(parts) + "</p>" if parts else ""
+
 def build_lawfulness(fields):
     base = fields.get("Base_de_liceite_du_traitement", []) # a revoir
     result = {v: 0 for v in LAWFULNESS_MAP.values()}
     for item in base:
-        # print(f"Mon item : {item}")
-        # print(f"Ma base : {base}")
         if item in LAWFULNESS_MAP:
             result[LAWFULNESS_MAP[item]] = 1
     return result
+
+def build_data_collect(fields):
+    items = [
+        label for key, label in data_collect_map.items()
+        if fields.get(key)
+    ]
+    if not items:
+        return ""
+    liste = "".join(f"<li>{label}</li>" for label in items)
+    return f"<br><strong>Données collectées</strong><ul>{liste}</ul>"
+               
+def build_type_traitement(fields):
+    items = clean_list(fields.get("TYPE_DE_TRAITEMENT", []))
+    if not items:
+        return ""
+    liste = "".join(f"<li>{item.replace(chr(10), ' ')}</li>" for item in items)
+    return f"<br><strong>Types de traitement</strong><ul>{liste}</ul>"
+
+def get_grist_app_index():
+    r = requests.get(
+        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/Mercator_mappage/records",
+        headers=headers
+    )
+    index = {}
+    for record in r.json()["records"]:
+        index[record["id"]] = record["fields"]["mercator_id"]
+    return index
+
+def liste_app(fields):
+    grist_app_index = get_grist_app_index()
+    liste_possible_app = [
+        'Application_1_concernee_par_le_traitement',
+        'Application_2_concernee_par_le_traitement',
+        'Application_3_concernee_par_le_traitement'
+    ]
+    applications = []
+    for app in liste_possible_app:
+        grist_id = fields.get(app)
+        if grist_id and grist_id in grist_app_index:
+            applications.append(grist_app_index[grist_id])
+    return applications
 
 def payload_grist(data):
         data_fields = data.get("fields", {})
         mon_dico = build_lawfulness(data_fields)
         return {
             "name": data["fields"]["NOM_TRAITEMENT"],
-            "description": "grist_uuid:" + data["fields"]["UUID"] + "\n" + (data_fields.get("Description_du_traitement") or ""), # Ajouter type de traitement
-            # "legal_basis": 
+            "description": f"grist_uuid:{data['fields']['UUID']}<br>{data_fields.get('Description_du_traitement') or ''}{build_data_collect(data_fields)}<br>{build_type_traitement(data_fields)}",            
+            "legal_basis": (data_fields.get('Reference_juridique_du_traitement') or ''),
             "purpose":          data_fields.get("Finalite_principale"),
             "responsible":      data_fields.get("Entite_Responsable_du_traitement"),
-            "legal_basis":      data_fields.get("Reference_juridique_du_traitement"),
             "retention": str(data_fields.get("NOMBRE_DE_MOIS", "")) + " mois",
-            "categories":       clean_list(data_fields.get("Cibles")), 
-            "data_collection_obligation":       clean_list(data_fields.get("Canaux_de_collecte")),
-            "data_source":       clean_list(data_fields.get("Origine_des_donnees")),
+            "categories":       list_to_str(data_fields.get("Cibles")), 
+            "data_collection_obligation":       list_to_str(data_fields.get("Canaux_de_collecte")),
+            "data_source":       list_to_str(data_fields.get("Origine_des_donnees")),
             "automated_decision_making":        data_fields.get("Recours_au_profilage_"),
             "recipients":       build_recipients(data_fields),
             "transfert":        build_transfert(data_fields),
@@ -130,45 +242,31 @@ def payload_grist(data):
             "lawfulness_vital_interest": mon_dico["lawfulness_vital_interest"],
             "lawfulness_public_interest": mon_dico["lawfulness_public_interest"],
             "lawfulness_legitimate_interest": mon_dico["lawfulness_legitimate_interest"],
-            "update_date": f"{datetime.datetime.now().year}-{datetime.datetime.now().month}-{datetime.datetime.now().day}"
+            "update_date": ma_date,
+            "applications": liste_app(data_fields),
         }
-# TODO Généraliser le data get
-mon_index = trouver_id(vheaders)
+#-----------------------------------------------------------------------------
+# Fonctions
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# Appel principal
+#-----------------------------------------------------------------------------
 
 for record in response.json()["records"]:
     ok = record.get("fields", {}).get("STATUT") == '✅ Fiche traitée'
     uuid = record.get("fields", {}).get("UUID")
-    # print(f"Mon INDEX DE FOUUFOUFOUFOUFOUOFU {mon_index}")
     if uuid in mon_index and ok :
-            requête = requests.patch(
+            requete = requests.patch(
                 f"{BASE_URL}/api/data-processings/{mon_index[uuid]}",
                 json=payload_grist(record), headers=vheaders         )
-            print(record)
     elif ok :
-        requête = requests.post(
+        requete = requests.post(
             f"{BASE_URL}/api/data-processings",
             json=payload_grist(record), headers=vheaders
         )
-        print(requête.text)
-
+#-----------------------------------------------------------------------------
+# Appel principal
+#-----------------------------------------------------------------------------
 
 # TODO : 
-# Verifier le statut et si validé importé sinon rien
-# Mapper le reste des champs
-# Structurer ça en objets ! Créer une classe Grist etc... et un mercator client ! Répartir en 3 files
-
-
-
-# name : fields, NOM_TRAITEMENT
-# description : fields, Description_du_traitement
-# purpose : fields, Finalite_principale
-# responsible : fields, Entite_Responsable_du_traitement
-# legal_basis : fields, Reference_juridique_du_traitement
-# retention : fields, NOMBRE_DE_MOIS
-# categories -> Html, prendre la liste et formalisé ça en balise liste parcourir le champ fields, Cibles
-# data_collection_obligation ->  Champ texte -> Pareil parcours la liste et genere un str avec l'ensemble
-# data_source -> texte str pareil parcours la liste et genere un str
-# automated_decision_making -> Texte str lambda la c booléen ....
-# recipients -> Catégorie de dest en html à convertir ! Complexe, doit parcourir le dico et prendre tout de Destinataire_ ...
-# transfert -> idem html donc convert et j'imagine tt les dest hors ue ? 
-# lawfulness - truc à cocher dans la base juridique de traitement il y en a 6, valeur 0 = non, 1 = oui à verif
+# Structurer ça en objets ! Créer une classe Grist etc... et un mercator client ! Répartir en 3 files et env
