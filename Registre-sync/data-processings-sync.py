@@ -59,26 +59,30 @@ response.raise_for_status()
 # Remplissage de la table app vers Grist
 #-----------------------------------------------------------------------------
 def sync_applications_mercator():
+    requete = requests.get(
+        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/[table_mercator]/records",
+        headers=headers
+    )
+    ids = [record["id"] for record in requete.json()["records"]]
+    if ids:
+        requests.post(
+            f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/[table_mercator]/data/delete",
+            json=ids,
+            headers=headers
+        )
+    
+    # Repeuple, voir pour patch à terme
     requête = requests.get(f"{BASE_URL}/api/applications", headers=vheaders)
     apps = requête.json()
-    print(apps)
     records = [
         {"fields": {"mercator_id": app["id"], "name": app["name"]}}
         for app in apps
     ]
-    
-    requete2 = requests.post(
-        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/Mercator_mappage/records",
+    requests.post(
+        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/[table_mercator]/records",
         json={"records": records},
         headers=headers
     )
-    requete = requests.get(
-    f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables",
-    headers=headers
-    )
-    print(requete.json())
-
-    print(requete2.status_code, requete2.text)
 sync_applications_mercator()
 #-----------------------------------------------------------------------------
 # Remplissage de la table app vers Grist
