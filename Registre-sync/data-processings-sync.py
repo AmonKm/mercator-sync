@@ -34,11 +34,11 @@ response = requests.post(
     headers=vheaders,
     json={'login': login, 'password': password}
 )
-print(response.status_code)
 
 if response.status_code != 200:
-    print("Échec de l'authentification")
+    logging.warning(f"Oups ptit soucis avec ce code erreur : {response.status_code}")
     exit(1)
+logging.info(f"Wouhou un code 200 !!!")
 
 vheaders['Authorization'] = "Bearer " + response.json()['access_token']
 #-----------------------------------------------------------------------------
