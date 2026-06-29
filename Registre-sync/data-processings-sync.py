@@ -4,19 +4,24 @@
 # Import
 #-----------------------------------------------------------------------------
 import requests
-import getpass
 import datetime
 import re
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s') # Parce que pourquoi pas
+from dotenv import load_dotenv
+import os
+from pathlib import Path
+load_dotenv(Path(__file__).parent.parent / ".env")
 #-----------------------------------------------------------------------------
 # Import
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
 # Authentification Mercator
 #-----------------------------------------------------------------------------
-BASE_URL = "https://mercator.exemple.fr"
+BASE_URL = os.environ["MERCATOR_URL"]
 print("Login")
-login = 'Mon compte admin'
-password = getpass.getpass('Mot de passe : ')
+login = os.environ["MERCATOR_USER"]
+password = os.environ["MERCATOR_PASS"]
 
 vheaders = {
     'accept': 'application/json',
@@ -43,8 +48,8 @@ vheaders['Authorization'] = "Bearer " + response.json()['access_token']
 # Authentification Grist
 #-----------------------------------------------------------------------------
 GRIST_BASE_URL = "https://grist.numerique.gouv.fr"
-GRIST_API_KEY = "TOKEN" 
-GRIST_DOC_ID = "ID du document"
+GRIST_API_KEY = os.environ["GRIST_API_TOKEN"]
+GRIST_DOC_ID = os.environ["GRIST_DOC_ID"]
 GRIST_TABLE_ID = "Registre_des_Fiches_de_Traitements"  
 
 headers = {"Authorization": f"Bearer {GRIST_API_KEY}"}
