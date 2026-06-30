@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.13+-blue?logo=python&logoColor=white)
 ![Mercator](https://img.shields.io/badge/Mercator-API-4A90D9?logo=data:image/svg+xml;base64,)
 ![Status](https://img.shields.io/badge/Statut-En%20développement-orange)
-## Synchronisation d'une infrastructure de virtualisation 
+## Synchronisation d'une infrastructure de virtualisation avec Mercator
 Synchronisation des machines virtuelles et des clusters de différentes sources vers Mercator :
 - Vcenter (VMware)
 - XOA (XCP-ng) en projet
