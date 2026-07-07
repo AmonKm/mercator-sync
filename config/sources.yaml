@@ -1,25 +1,37 @@
 sources:
-  vcenter_prod:
+  vcenter_prod_R:
     type: vcenter
-    base_url: "URL_VCENTER"
+    name_id: vcenter-r
+    base_url: VCENTER_URL_R
     auth:
-      username_env: VCENTER_USER
-      password_env: VCENTER_PASS
+      username_env: VCENTER_USER_R
+      password_env: VCENTER_PASS_R
+    verify_ssl: false
+    enabled: true
+
+  vcenter_prod_I:
+    type: vcenter
+    name_id: vcenter-i
+    base_url: VCENTER_URL_I
+    auth:
+      username_env: VCENTER_USER_I
+      password_env: VCENTER_PASS_I
     verify_ssl: false
     enabled: true
 
   xoa_prod:
     type: xoa
-    base_url: "URL_XOA"
-    pool_id: "uuid_pool" #au besoin
+    name_id: xoa
+    base_url: XOA_URL
+    pool_id: "mon_pool_id"
     auth:
       token_env: XOA_TOKEN
-    verify_ssl: true
+    verify_ssl: false
     enabled: true
 
 destination:
   mercator:
-    base_url: "URL_MERCATOR"
+    base_url: MERCATOR_URL
     auth:
       username_env: MERCATOR_USER
       password_env: MERCATOR_PASS
@@ -36,11 +48,15 @@ mappings:
       source_key: vm
 
   xoa:
+    cluster:
+      mercator_endpoint: /api/clusters
+      mercator_key: xcpng_id
+      source_key: id
     logical_server:
       mercator_endpoint: /api/logical-servers
       mercator_key: xcpng_id
       source_key: id
 
-sync: # à revoir ...?
+sync:
   orphan_tag: "etat_sync:orphelin"
   dry_run: false
