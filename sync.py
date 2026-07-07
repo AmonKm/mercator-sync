@@ -1,5 +1,5 @@
 """
-sync.py Orchestrateur Mercator - En cours de dev
+sync.py Orchestrateur Mercator
 Usage :
     python sync.py                         # toutes les sources activées
     python sync.py --source vcenter_prod   # une source précise
@@ -15,14 +15,14 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 print(os.environ.get("MERCATOR_USER", "NON CHARGÉ"))
 
-from connectors import REGISTRY # Contenu dans le __init__
+from connectors import REGISTRY
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s") # Parce que pourquoi pas
 log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Client Mercator - Classe
+# Client Mercator
 # ---------------------------------------------------------------------------
 
 class MercatorClient: # Classe qui permet de définir différentes méthodes pour mercator 
@@ -31,7 +31,7 @@ class MercatorClient: # Classe qui permet de définir différentes méthodes pou
         base     = config["destination"]["mercator"] # Prend l'entrée mercator avec les différentes sous-entrées dans le fichier sources.yaml
         username = os.environ[base["auth"]["username_env"]] # Login d'un compte Admin de Mercator défini dans .env et sources.yaml
         password = os.environ[base["auth"]["password_env"]] # Password d'un compte Admin de Mercator défini dans .env et sources.yaml
-        self.base_url = base["base_url"] # URL de Mercator défini dans sources.yaml
+        self.base_url = os.environ[base["base_url"]] # URL de Mercator défini dans sources.yaml
         self.dry_run  = dry_run # Booléen, si True cela serira à ne pas changer les informations de prod
 
         requête = requests.post( # Requête pour obtenir letoken visant le endpoint /api/login
@@ -47,16 +47,18 @@ class MercatorClient: # Classe qui permet de définir différentes méthodes pou
             "Content-Type": "application/json"
         }
     
-    def build_index(self, endpoint: str, mercator_key: str) -> dict[str, int]: # Créer un dictionnaire avec l'id de la source (Vcenter/XCP-ng...) et l'id de l'objet mercator
+    def build_index(self, endpoint: str, mercator_key: str, source_name: str = None) -> dict[str, int]: # retirer clé, on change de logique avec ext refs !
         requête = requests.get(f"{self.base_url}{endpoint}", headers=self.headers)
         requête.raise_for_status()
-        index = {} # Initie notre dictionnaire
-        for item in requête.json():  # Pour chaque objet de la requête
-            attributes = item.get("attributes", "") or "" # On prend l'attribut s'il y en a ! (Le script prend cluster / vms donc les attributs sont présent)
-            val = parse_attribute(attributes, mercator_key) # On parse les attributs, la fonction renvoie None ou l'id de la source
-            if val: # S'il y a bien un attribut contenant un id source
-                index[val] = item["id"] # On crée une entrée clé valeur avec l'id de la source -> l'id de l'objet dans mercator 
-        return index # Retourne le dictionnaire
+        index = {}
+        for item in requête.json():
+            ext_refs = item.get("ext_refs", "") or ""
+            for ref in ext_refs.split("|"):
+                if ref.startswith(f"{{{source_name}}}"):
+                    val = ref.replace(f"{{{source_name}}}", "")
+                    if val:
+                        index[val] = item["id"]
+        return index
 
     def upsert(self, endpoint: str, index: dict, key_value: str, payload: dict) -> int | None: # Prend en argument l'endpoint à viser, le dictionnaire d'index au dessus, une valeur de clé de la source, le payload mappé !
         if self.dry_run: # Si notre dry_run est True
@@ -69,7 +71,7 @@ class MercatorClient: # Classe qui permet de définir différentes méthodes pou
                 f"{self.base_url}{endpoint}/{index[key_value]}",
                 json=payload, headers=self.headers
             )
-            time.sleep(0.5)
+            time.sleep(1)
         else: # Sinon on le créer 
             requête = requests.post(f"{self.base_url}{endpoint}", json=payload, headers=self.headers)
         if not requête.ok:
@@ -82,32 +84,20 @@ class MercatorClient: # Classe qui permet de définir différentes méthodes pou
             return index.get(key_value)
         return response_data.get("id")
 
-    # def tag_orphans(self, endpoint: str, orphan_tag: str, seen_keys: set, mercator_key: str) -> None: # A revoir
-    #     requête = requests.get(f"{self.base_url}{endpoint}", headers=self.headers)
-    #     requête.raise_for_status()
-    #     for item in r.json():
-    #         attributes = item.get("attributes", "") or ""
-    #         val = parse_attribute(attributes, mercator_key)
-    #         if val and val not in seen_keys:
-    #             new_attributes = attributes + f" {orphan_tag}"
-    #             requests.patch(
-    #                 f"{self.base_url}{endpoint}/{item['id']}",
-    #                 json={"attributes": new_attributes.strip()},
-    #                 headers=self.headers
-    #             )
-    #             time.sleep(0.5)
-    #             log.info("Orphelin tagué : %s  id=%s", item.get("name", "?"), item["id"])
+    def tag_orphans(self, endpoint: str, orphan_tag: str, seen_keys: set, mercator_key: str) -> None: # A revoir, en construction ...
+        return None
 
 
 # ---------------------------------------------------------------------------
-# Code principal - Contient le parse attribute + la gestion des sources
+# Code principal - Contient la gestion des sources
 # ---------------------------------------------------------------------------
-def parse_attribute(attributes: str, key: str) -> str | None: # Key étant la clé soit xcpng_id ou vcenter_id pour identifier la source
-    """Extrait la valeur d'une clé dans le champ attributes Mercator."""
-    for attr in attributes.split(" "):
-        if attr.startswith(f"{key}:"):
-            return attr.split(":", 1)[1]
-    return None
+# OLD
+# def parse_attribute(attributes: str, key: str) -> str | None: # Key étant la clé soit xcpng_id ou vcenter_id pour identifier la source
+#     """Extrait la valeur d'une clé dans le champ attributes Mercator."""
+#     for attr in attributes.split(" "):
+#         if attr.startswith(f"{key}:"):
+#             return attr.split(":", 1)[1]
+#     return None
 # La logique changera, un champ sera disponible pour la gestion de source directement intégré à Mercator !!!
 # --------------------------------------------------------------------------
 def sync_source(source_name: str, source_cfg: dict, mappings: dict,
@@ -127,16 +117,16 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
         log.error("Authentification échouée pour %s : %s", source_name, e)
         return
 
-    m = mappings.get(source_type, {})
+    m = mappings.get(source_type, {}) 
     cluster_cfg = m.get("cluster") # On prend la section cluster de l'une des sources contenant le endpoint à viser, la cle id et la source cle (vm ou cluster)
     vm_cfg      = m.get("logical_server")
 
     # --- Index Mercator (une seule requête par endpoint) ---
-    cluster_index = mercator.build_index(cluster_cfg["mercator_endpoint"], cluster_cfg["mercator_key"]) if cluster_cfg else {}
-    vm_index      = mercator.build_index(vm_cfg["mercator_endpoint"],      vm_cfg["mercator_key"])      if vm_cfg      else {}
+    cluster_index = mercator.build_index(cluster_cfg["mercator_endpoint"], cluster_cfg["mercator_key"], source_name) if cluster_cfg else {}
+    vm_index      = mercator.build_index(vm_cfg["mercator_endpoint"],      vm_cfg["mercator_key"], source_name)      if vm_cfg      else {}
 
     seen_vm_keys = set() # Un ensemble pour l'unicité des valeurs quand même !
-
+    mercator_cluster_id = None
     # --- Extract + Transform + Load ---
     clusters = connector.fetch_clusters()
     for cluster in clusters:
@@ -159,10 +149,9 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
             payload_vm = connector.build_vm_payload(vm_id, enriched)
             # Une VM vCenter appartient à un seul cluster
             # TODO : si plusieurs clusters possibles, récupérer la liste existante via GET et appender
-            payload_vm["clusters"] = [mercator_cluster_id]
-            payload_vm[vm_cfg["mercator_key"]] = vm_id
-            # print(f"cluster_id Mercator : {mercator_cluster_id}")
-            # print(f"payload_vm : {payload_vm}")
+            if mercator_cluster_id:
+                payload_vm["clusters"] = [mercator_cluster_id]
+
             mercator.upsert(vm_cfg["mercator_endpoint"], vm_index, vm_id, payload_vm)
             seen_vm_keys.add(vm_id)
             log.info("  VM : %s", payload_vm.get("name", vm_id))
@@ -181,7 +170,7 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
 # Entrée
 # ---------------------------------------------------------------------------
 
-def main(): # regarder la doc si possible de faire +
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config",  default="config/sources.yaml")
     parser.add_argument("--source",  default=None, help="Nom d'une source précise")
@@ -215,6 +204,15 @@ def main(): # regarder la doc si possible de faire +
             log.info("Source désactivée : %s", nom_source)
             continue
         sync_source(nom_source, config_source, mappings, client_mercator, config_sync)
+
+
+# En construction
+# TODO : 
+# Proxmox
+# Plusieurs clusters ?
+# Enrichir les informations.
+# Condenser le code + efficace ?
+# Concanténer les attributs et ne pas les écraser dans les payloads !
 
 
 if __name__ == "__main__":
