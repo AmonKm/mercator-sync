@@ -139,7 +139,7 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
 
         vms = connector.fetch_vms(cluster_id)
         for vm in vms:
-            vm_id = vm[vm_cfg["source_key"]]
+            vm_id = str(vm[vm_cfg["source_key"]])
             try:
                 enriched = connector.enrich_vm(vm_id, vm)
             except Exception as e:
