@@ -91,4 +91,6 @@ class VCenterConnector(BaseConnector):
             "name":       cluster.get("name", ""),
             "ext_refs": f"{{{self.name}}}{cluster_id}", 
             "attributes":       f"{self.config['name_id']}",
+            "type": "VMware",
+            "description": f"Cluster provenant de la source : {self.name}"
         }
