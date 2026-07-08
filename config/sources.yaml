@@ -28,6 +28,16 @@ sources:
       token_env: XOA_TOKEN
     verify_ssl: false
     enabled: true
+    
+  proxmox_prod:
+    type: proxmox
+    name_id: proxmox
+    base_url: PROXMOX_URL
+    auth:
+      user_env: PROXMOX_USER
+      token_env: PROXMOX_TOKEN
+    verify_ssl: false
+    enabled: true
 
 destination:
   mercator:
@@ -56,6 +66,16 @@ mappings:
       mercator_endpoint: /api/logical-servers
       mercator_key: xcpng_id
       source_key: id
+      
+  proxmox:
+    cluster:
+      mercator_endpoint: /api/clusters
+      mercator_key: proxmox_id
+      source_key: node
+    logical_server:
+      mercator_endpoint: /api/logical-servers
+      mercator_key: proxmox_id
+      source_key: vmid
 
 sync:
   orphan_tag: "etat_sync:orphelin"
