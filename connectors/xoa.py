@@ -72,4 +72,6 @@ class XoaConnector(BaseConnector):
             "name":       cluster.get("name_label", cluster_id)[:32],
             "ext_refs":   f"{{{self.name}}}{cluster_id}",
             "attributes": f"{self.config['name_id']}",
+            "type": "XCP-ng",
+            "description": f"Cluster provenant de la source : {self.name}"
         }
