@@ -7,14 +7,29 @@
 ![Proxmox](https://img.shields.io/badge/Proxmox-API-4A90D9?logo=proxmox&logoColor=white)
 ![Status](https://img.shields.io/badge/Statut-En%20développement-orange)
 
-## Synchronisation d'une infrastructure de virtualisation avec Mercator
-Synchronisation des machines virtuelles et des clusters de différentes sources vers Mercator :
+# Mercator-sync
+## Contexte
+Ce repo Gihtub est une **réponse** à un besoin principal : 
+
+Alimenter **Mercator** avec une solution de virtualisation établi dans une organisation. 
+
+Dans mon/notre *contexte*, nous avions notamment besoin de l'ensemble des VMs et des clusters supportant des applications du système.
+
+Faisant suite à différents échanges, le simple script d'alimentation s'est transformé en **orchestrateur** pour qu'il soit modulaire et pour permettre une utilisation généralisé en cas de changement de solution de virtualisation.
+
+Ainis, ce repo contient un orchestrateur permettant d'alimenter l'ensemble des clusters et des VMs par clusters sur trois sources : **Vcenter, XOA, Proxmox.**
+
+Egalement, il existe un script pour permettre la synchronisation de traitement Grist vers mercator.
+
+---
+### Synchronisation des machines virtuelles et des clusters de différentes sources vers Mercator :
+### Sources :
 - Vcenter (VMware)
 - XOA (XCP-ng)
 - Proxmox
-## Fonctionnement
-<img width="1312" height="1352" alt="github_schemzz drawio" src="https://github.com/user-attachments/assets/aa347dc4-fb35-4885-a4ed-d09a4c3f3e2f" />
 
+### Fonctionnement
+<img width="1312" height="1352" alt="github_schemzz drawio" src="https://github.com/user-attachments/assets/aa347dc4-fb35-4885-a4ed-d09a4c3f3e2f" />
 
 ### Installer le repo et se l'approprier :
 ```bash
@@ -29,9 +44,16 @@ python sync.py --dry-run
 ### Les différentes options :
 ```
 python sync.py                         # toutes les sources activées
-python sync.py --source vcenter_prod   # une source précise
+python sync.py --source vcenter_prod   # une source précise selon le nom de cette source défini dans config/sources.yaml
 python sync.py --dry-run               # aucune écriture dans Mercator, "simulation" uniquement
 python sync.py --config config/sources.yaml   # chemin alternatif vers le fichier de config
 ```
 ---
-## En construction pour le reste ! :D
+### Synchronisation d'un registre de traitement Grist dans Mercator
+### Source :
+- Grist
+
+### Fonctionnement
+### Installer le repo et se l'approprier :
+### Les différentes options :
+
