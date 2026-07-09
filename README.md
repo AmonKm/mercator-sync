@@ -13,7 +13,8 @@ Synchronisation des machines virtuelles et des clusters de différentes sources 
 - XOA (XCP-ng)
 - Proxmox
 ## Fonctionnement
-<img width="1104" height="628" alt="Schema-github-sync-infra drawio" src="https://github.com/user-attachments/assets/ed82a832-1ad7-43c9-8658-70ad0bc95e9d" />
+<img width="1312" height="1352" alt="github_schemzz drawio" src="https://github.com/user-attachments/assets/aa347dc4-fb35-4885-a4ed-d09a4c3f3e2f" />
+
 
 ### Installer le repo et se l'approprier :
 ```bash
