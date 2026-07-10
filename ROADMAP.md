@@ -6,6 +6,7 @@
 
 ### Prévu aôut :
 - [ ] Commentaires en FR et EN
+- [ ] Gestion des objets orphelins
 
 ### Prévu mais réalisation indéfinie :
 - [ ] Intégration avec PETL (Multi-src, consolider une table commune)
