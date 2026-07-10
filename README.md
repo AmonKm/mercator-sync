@@ -55,6 +55,17 @@ python sync.py --config config/sources.yaml   # chemin alternatif vers le fichie
 
 ### Fonctionnement
 <img width="1370" height="430" alt="github-gri drawio" src="https://github.com/user-attachments/assets/361dd847-4c76-459f-9126-12aa2b07df77" />
+
 ### Installer le repo et se l'approprier :
-### Les différentes options :
+```bash
+git clone https://github.com/AmonKm/mercator-sync
+cd mercator-sync
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+cd /Registre-sync
+python data-processings-sync.py
+```
+### Template Grist sur lequel on se base ici :
 
