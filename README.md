@@ -17,7 +17,7 @@ Dans mon/notre *contexte*, nous avions notamment besoin de l'ensemble des VMs et
 
 Faisant suite à différents échanges, le simple script d'alimentation s'est transformé en **orchestrateur** pour qu'il soit modulaire et pour permettre une utilisation généralisé en cas de changement de solution de virtualisation.
 
-Ainis, ce repo contient un orchestrateur permettant d'alimenter l'ensemble des clusters et des VMs par clusters sur trois sources : **Vcenter, XOA, Proxmox.**
+Ainsi, ce repo contient un orchestrateur permettant d'alimenter l'ensemble des clusters et des VMs par clusters sur trois sources : **Vcenter, XOA, Proxmox.**
 
 Egalement, il existe un script pour permettre la synchronisation de traitement Grist vers mercator.
 
