@@ -54,6 +54,7 @@ python sync.py --config config/sources.yaml   # chemin alternatif vers le fichie
 - Grist
 
 ### Fonctionnement
+<img width="1370" height="430" alt="github-gri drawio" src="https://github.com/user-attachments/assets/361dd847-4c76-459f-9126-12aa2b07df77" />
 ### Installer le repo et se l'approprier :
 ### Les différentes options :
 
