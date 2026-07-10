@@ -32,7 +32,7 @@ class MercatorClient: # Classe qui permet de définir différentes méthodes pou
         username = os.environ[base["auth"]["username_env"]] # Login d'un compte Admin de Mercator défini dans .env et sources.yaml
         password = os.environ[base["auth"]["password_env"]] # Password d'un compte Admin de Mercator défini dans .env et sources.yaml
         self.base_url = os.environ[base["base_url"]] # URL de Mercator défini dans sources.yaml
-        self.dry_run  = dry_run # Booléen, si True cela serira à ne pas changer les informations de prod
+        self.dry_run  = dry_run # Booléen, si True cela servira à ne pas changer les informations de prod
 
         requête = requests.post( # Requête pour obtenir letoken visant le endpoint /api/login
             f"{self.base_url}/api/login",
