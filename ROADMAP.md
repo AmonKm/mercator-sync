@@ -1,6 +1,6 @@
 # Roadmap
 ### Prévu fin Juillet 2026 :
-- [ ] Utilisation du champ ext_refs pour data-processing-sync.py
+- [ ] Utilisation du champ ext_refs pour data-processings-sync.py
 - [ ] Finalisation du Readme (notamment la partie sur Grist)
 - [ ] Traduction en anglais du Readme
 
