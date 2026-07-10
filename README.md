@@ -1,10 +1,11 @@
 # mercator-sync
 
 ![Python](https://img.shields.io/badge/Python-3.13+-blue?logo=python&logoColor=white)
-![Mercator](https://img.shields.io/badge/Mercator-API-4A90D9?logo=graphql&logoColor=white)
+![Mercator](https://img.shields.io/badge/Mercator-API-4A90D9?logo=mapbox&logoColor=white)
 ![Vcenter](https://img.shields.io/badge/Vcenter-API-4A90D9?logo=vmware&logoColor=white)
 ![XOA](https://img.shields.io/badge/XOA-API-4A90D9?logo=cloudflare&logoColor=white)
 ![Proxmox](https://img.shields.io/badge/Proxmox-API-4A90D9?logo=proxmox&logoColor=white)
+![Grist](https://img.shields.io/badge/Grist-API-4A90D9?logo=databricks&logoColor=white)
 ![Status](https://img.shields.io/badge/Statut-En%20développement-orange)
 
 # Mercator-sync
