@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# TODO Préciser le type des variables
 #-----------------------------------------------------------------------------
 # Import
 #-----------------------------------------------------------------------------
@@ -65,13 +64,13 @@ response.raise_for_status()
 #-----------------------------------------------------------------------------
 def sync_applications_mercator():
     requete = requests.get(
-        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/[table_mercator]/records",
+        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/Mercator_mappage/records",
         headers=headers
     )
     ids = [record["id"] for record in requete.json()["records"]]
     if ids:
         requests.post(
-            f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/[table_mercator]/data/delete",
+            f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/Mercator_mappage/data/delete",
             json=ids,
             headers=headers
         )
@@ -84,7 +83,7 @@ def sync_applications_mercator():
         for app in apps
     ]
     requests.post(
-        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/[table_mercator]/records",
+        f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/Mercator_mappage/records",
         json={"records": records},
         headers=headers
     )
@@ -135,32 +134,29 @@ ma_date = f"{datetime.datetime.now().year}-{datetime.datetime.now().month}-{date
 # Fonctions
 #-----------------------------------------------------------------------------
 
-def extract_grist_uuid(description: str) -> str | None:
-    if not description:
-        return None
-    match = UUID_RE.search(description)
-    return match.group(1) if match else None
-
-def trouver_id(entete):
+def trouver_id(entete:dict) -> dict:
         requête = requests.get(f"{BASE_URL}/api/data-processings", headers=entete)
         index = {}
-        for traitement in requête.json():  # plus de ["data"]
-            description = traitement.get("description", "") or ""
-            val = extract_grist_uuid(description)
-            if val:
-                index[val] = traitement["id"]
+        for item in requête.json():  # plus de ["data"]
+            ext_refs = item.get("ext_refs", "") or ""
+            for ref in ext_refs.split("|"):
+                if ref.startswith(f"{{Grist}}"):
+                    val = ref.replace(f"{{Grist}}", "")
+                    if val:
+                        index[val] = item["id"]
         return index
+
 mon_index = trouver_id(vheaders)
 
-def clean_list(val):
+def clean_list(val:list) -> list:
     if isinstance(val, list):
         return [v for v in val if v != "L"]
     return []
 
-def list_to_str(val):
+def list_to_str(val:list) -> str:
     return ", ".join(clean_list(val))
 
-def build_recipients(fields):
+def build_recipients(fields:dict) -> str:
     parts = []
     for i in ["1", "2", "3", "4"]:
         org = fields.get(f"Destinataire_{i}_Organisme", "")
@@ -169,7 +165,7 @@ def build_recipients(fields):
             parts.append(f"{org} ({typ})")
     return "<p>" + ", ".join(parts) + "</p>" if parts else ""
 
-def build_transfert(fields):
+def build_transfert(fields:dict) -> str:
     parts = []
     for i in ["1", "2", "3", "4"]:
         org = fields.get(f"Destinataire_{i}_Organisme_hors_UE_", "")
@@ -180,7 +176,7 @@ def build_transfert(fields):
             parts.append(f"{org} hors UE <li><br> Pays hors UE : {pays} </br><br> Type de garanties hors UE: {typ} </br><br>Lien vers le doc hors UE: {link}</br></li>")
     return "<p>" + ", ".join(parts) + "</p>" if parts else ""
 
-def build_lawfulness(fields):
+def build_lawfulness(fields:dict) -> dict:
     base = fields.get("Base_de_liceite_du_traitement", []) # a revoir
     result = {v: 0 for v in LAWFULNESS_MAP.values()}
     for item in base:
@@ -188,7 +184,7 @@ def build_lawfulness(fields):
             result[LAWFULNESS_MAP[item]] = 1
     return result
 
-def build_data_collect(fields):
+def build_data_collect(fields:dict) -> str:
     items = [
         label for key, label in data_collect_map.items()
         if fields.get(key)
@@ -198,14 +194,14 @@ def build_data_collect(fields):
     liste = "".join(f"<li>{label}</li>" for label in items)
     return f"<br><strong>Données collectées</strong><ul>{liste}</ul>"
                
-def build_type_traitement(fields):
+def build_type_traitement(fields:dict) -> str:
     items = clean_list(fields.get("TYPE_DE_TRAITEMENT", []))
     if not items:
         return ""
     liste = "".join(f"<li>{item.replace(chr(10), ' ')}</li>" for item in items)
     return f"<br><strong>Types de traitement</strong><ul>{liste}</ul>"
 
-def get_grist_app_index():
+def get_grist_app_index() -> dict:
     r = requests.get(
         f"{GRIST_BASE_URL}/api/docs/{GRIST_DOC_ID}/tables/Mercator_mappage/records",
         headers=headers
@@ -214,8 +210,9 @@ def get_grist_app_index():
     for record in r.json()["records"]:
         index[record["id"]] = record["fields"]["mercator_id"]
     return index
-grist_app_index = get_grist_app_index()
-def liste_app(fields):
+
+def liste_app(fields:dict) -> list:
+    grist_app_index = get_grist_app_index()
     liste_possible_app = [
         'Application_1_concernee_par_le_traitement',
         'Application_2_concernee_par_le_traitement',
@@ -228,12 +225,13 @@ def liste_app(fields):
             applications.append(grist_app_index[grist_id])
     return applications
 
-def payload_grist(data):
+def payload_grist(data:dict) -> dict:
         data_fields = data.get("fields", {})
         mon_dico = build_lawfulness(data_fields)
         return {
             "name": data["fields"]["NOM_TRAITEMENT"],
             "description": f"grist_uuid:{data['fields']['UUID']}<br>{data_fields.get('Description_du_traitement') or ''}{build_data_collect(data_fields)}<br>{build_type_traitement(data_fields)}",            
+            "ext_refs": f"{{Grist}}{data['fields']['UUID']}",
             "legal_basis": (data_fields.get('Reference_juridique_du_traitement') or ''),
             "purpose":          data_fields.get("Finalite_principale"),
             "responsible":      data_fields.get("Entite_Responsable_du_traitement"),
@@ -261,14 +259,14 @@ def payload_grist(data):
 #-----------------------------------------------------------------------------
 
 for record in response.json()["records"]:
-    ok = record.get("fields", {}).get("STATUT") == '✅ Fiche traitée'
+    ok = record.get("fields", {}).get("STATUT") == '✅ Fiche traitée' # On se base sur l'état de la fiche dans Grist
     uuid = record.get("fields", {}).get("UUID")
     if uuid in mon_index and ok :
-            requete = requests.patch(
+            r = requests.patch(
                 f"{BASE_URL}/api/data-processings/{mon_index[uuid]}",
                 json=payload_grist(record), headers=vheaders         )
     elif ok :
-        requete = requests.post(
+        r = requests.post(
             f"{BASE_URL}/api/data-processings",
             json=payload_grist(record), headers=vheaders
         )
@@ -277,4 +275,4 @@ for record in response.json()["records"]:
 #-----------------------------------------------------------------------------
 
 # TODO : 
-# Structurer ça en objets ! Créer une classe Grist etc... et un mercator client ! Répartir en 3 files et env
+# Structurer ça en objets ! Créer une classe Grist etc... et un mercator client ! Répartir en 3 files
