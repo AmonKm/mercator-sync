@@ -12,7 +12,7 @@
 ## Contexte
 Ce repo Gihtub est une **réponse** à un besoin principal : 
 
-Alimenter **Mercator** avec une solution de virtualisation établi dans une organisation. 
+Alimenter [**Mercator**](https://github.com/sourcentis/mercator) avec une solution de virtualisation établi dans une organisation. 
 
 Dans mon/notre *contexte*, nous avions notamment besoin de l'ensemble des VMs et des clusters supportant des applications du système.
 
