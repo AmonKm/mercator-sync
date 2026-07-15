@@ -57,6 +57,22 @@ python sync.py --config config/sources.yaml   # chemin alternatif vers le fichie
 ### Fonctionnement
 <img width="1370" height="430" alt="github-gri drawio" src="https://github.com/user-attachments/assets/361dd847-4c76-459f-9126-12aa2b07df77" />
 
+Ce script se base sur l'utilisation d'un template mis à disposition dans votre espace Grist.
+Il suffit d'aller sur ce lien : https://grist.numerique.gouv.fr/o/docs/p/templates
+Puis de cliquer sur le template "Registre Protection des données".
+Une fois fait, il suffit de :
+- Cliquer sur "Ajouter"
+- Ajouter une page
+- Table
+- Nouvelle Table
+- La renommer **mercator_mappage**
+- La placer sous "TRAITEMENTS (script)"
+
+```
+Cette procédure sera automatiser à l'avenir (au moins en partie et directement dans le script)
+```
+
+
 ### Installer le repo et se l'approprier :
 ```bash
 git clone https://github.com/AmonKm/mercator-sync
