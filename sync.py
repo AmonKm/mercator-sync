@@ -48,7 +48,7 @@ class MercatorClient: # Classe qui permet de définir différentes méthodes pou
         }
     
     def build_index(self, endpoint: str, mercator_key: str, source_name: str = None) -> dict[str, int]: # retirer clé, on change de logique avec ext refs !
-        requête = requests.get(f"{self.base_url}{endpoint}", headers=self.headers)
+        requête = requests.get(f"{self.base_url}{endpoint}", headers=self.headers, timeout=10)
         requête.raise_for_status()
         index = {}
         for item in requête.json():
@@ -117,9 +117,9 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
         log.error("Authentification échouée pour %s : %s", source_name, e)
         return
 
-    m = mappings.get(source_type, {}) 
-    cluster_cfg = m.get("cluster") # On prend la section cluster de l'une des sources contenant le endpoint à viser, la cle id et la source cle (vm ou cluster)
-    vm_cfg      = m.get("logical_server")
+    map = mappings.get(source_type, {}) 
+    cluster_cfg = map.get("cluster") # On prend la section cluster de l'une des sources contenant le endpoint à viser, la cle id et la source cle (vm ou cluster)
+    vm_cfg      = map.get("logical_server")
 
     # --- Index Mercator (une seule requête par endpoint) ---
     cluster_index = mercator.build_index(cluster_cfg["mercator_endpoint"], cluster_cfg["mercator_key"], source_name) if cluster_cfg else {}
