@@ -5,14 +5,14 @@ from .base import BaseConnector
 
 class ProxmoxConnector(BaseConnector):
 
-    def authenticate(self) -> None:
+    def authenticate(self) -> None: # Méhode pour l'authentification. Créer un header avec le login mdp et créer les variables selon l'instance. Ne renvoie rien.
         token_id  = os.environ[self.config["auth"]["user_env"]]
         token_secret = os.environ[self.config["auth"]["token_env"]]
         self.headers = {"Authorization": f"PVEAPIToken={token_id}={token_secret}"}
         self.verify  = self.config.get("verify_ssl", True)
         self.base_url = os.environ[self.config["base_url"]]
         
-    def fetch_clusters(self) -> list[dict]:
+    def fetch_clusters(self) -> list[dict]: # Permet d'aller chercher l'ensemble des clusters. Renvoie une liste de dictionnaire, la liste des clusters...
 
         requête = requests.get(
             f"{self.base_url}/api2/json/nodes",
@@ -22,7 +22,7 @@ class ProxmoxConnector(BaseConnector):
 
         return requête.json()["data"]
 
-    def fetch_vms(self, cluster_id: str) -> list[dict]:
+    def fetch_vms(self, cluster_id: str) -> list[dict]: # Prend en argument l'id d'un cluster pour parcourir les VMs de ce cluster. Renvoie une liste de dictionnaire (VMs).
        requête= requests.get(
             f"{self.base_url}/api2/json/nodes/{cluster_id}/qemu",
             headers=self.headers, verify=self.verify, timeout=10
@@ -30,7 +30,7 @@ class ProxmoxConnector(BaseConnector):
        requête.raise_for_status()
        return requête.json()["data"]
 
-    def enrich_vm(self, vm_id: str, vm: dict) -> dict:
+    def enrich_vm(self, vm_id: str, vm: dict) -> dict: # Prend en argument l'id d'une VM et son dictionnaire de données et renvoie le dictionnaire associé avec les données de la VM, deux requêtes pour récuperer l'IP en plus.
         node = vm.get("node", "pve")
         requête= requests.get(
             f"{self.base_url}/api2/json/nodes/{node}/qemu/{vm_id}/config",
@@ -45,7 +45,7 @@ class ProxmoxConnector(BaseConnector):
         )
 
         ips = ""
-
+        # Cas spécifique : la structure de données oblige à parcourir par sous interface, ici on met plusieurs IPs si disponibles et on crée une entrée dans le dico.
         if requête_ip.status_code == 200:
             for interface in requête_ip.json().get("data", {}).get("result", []):
                 for sous_interface in interface.get("ip-addresses", []) :
@@ -67,7 +67,7 @@ class ProxmoxConnector(BaseConnector):
 
         return data
 
-    def build_vm_payload(self, vm_id: str, enriched: dict) -> dict:
+    def build_vm_payload(self, vm_id: str, enriched: dict) -> dict: # Prend en argument l'id d'une vm et le dictionnaire d'infos d'une VM. Renvoie un dictionnaire adapté à Mercator.
         cpu    = enriched.get("cores", 1) * enriched.get("sockets", 1)
         mem_go = round(int(enriched.get("memory", 0)) / 1024, 1)
         os_name = enriched.get("os_name", "")
@@ -84,7 +84,7 @@ class ProxmoxConnector(BaseConnector):
             "ext_refs": f"{{{self.name}}}{vm_id}",
         }
     
-    def build_cluster_payload(self, cluster_id: str, cluster: dict) -> dict:
+    def build_cluster_payload(self, cluster_id: str, _cluster: dict) -> dict: # Prend en argument l'id d'un cluster. Renvoie un dictionnaire adapté à Mercator.
         return {
             "name":       cluster_id[:32],
             "ext_refs":   f"{{{self.name}}}{cluster_id}",
