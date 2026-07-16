@@ -29,7 +29,7 @@ class VCenterConnector(BaseConnector):
     def fetch_clusters(self) -> list[dict]:
         requête = requests.get(
             f"{self.base_url}/api/vcenter/cluster",
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
         requête.raise_for_status()
         return requête.json()
@@ -38,7 +38,7 @@ class VCenterConnector(BaseConnector):
         requête = requests.get(
             f"{self.base_url}/api/vcenter/vm",
             params={"clusters": cluster_id},
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
         requête.raise_for_status()
         return requête.json()
@@ -47,7 +47,7 @@ class VCenterConnector(BaseConnector):
         """Deux appels vCenter : détails VM + identité guest."""
         r_details = requests.get(
             f"{self.base_url}/api/vcenter/vm/{vm_id}",
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
         r_details.raise_for_status()
         details = r_details.json()
@@ -55,7 +55,7 @@ class VCenterConnector(BaseConnector):
 
         r_guest = requests.get(
             f"{self.base_url}/api/vcenter/vm/{vm_id}/guest/identity",
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
         guest = r_guest.json() if r_guest.status_code == 200 else {}
 
