@@ -11,7 +11,7 @@ from .base import BaseConnector
 
 class VCenterConnector(BaseConnector):
 
-    def authenticate(self) -> None:
+    def authenticate(self) -> None: # Méhode pour l'authentification. Créer un header avec le login mdp et créer les variables selon l'instance. Ne renvoie rien.
         user   = os.environ[self.config["auth"]["username_env"]] # On prend le login du fichier env en passant par le fichier yaml
         pwd    = os.environ[self.config["auth"]["password_env"]] # On prend le password du fichier env en passant par le fichier yaml
         verify = self.config.get("verify_ssl", True)
@@ -26,7 +26,7 @@ class VCenterConnector(BaseConnector):
         self.headers = {"vmware-api-session-id": requête.json()}
         self.verify  = verify
 
-    def fetch_clusters(self) -> list[dict]:
+    def fetch_clusters(self) -> list[dict]: # Permet d'aller chercher l'ensemble des clusters. Renvoie une liste de dictionnaire, la liste des clusters...
         requête = requests.get(
             f"{self.base_url}/api/vcenter/cluster",
             headers=self.headers, verify=self.verify, timeout=10
@@ -34,7 +34,7 @@ class VCenterConnector(BaseConnector):
         requête.raise_for_status()
         return requête.json()
 
-    def fetch_vms(self, cluster_id: str) -> list[dict]: # On parcours l'ensemble des vms PAR cluster
+    def fetch_vms(self, cluster_id: str) -> list[dict]: # Prend en argument l'id d'un cluster pour parcourir les VMs de ce cluster. Renvoie une liste de dictionnaire (VMs).
         requête = requests.get(
             f"{self.base_url}/api/vcenter/vm",
             params={"clusters": cluster_id},
@@ -43,7 +43,7 @@ class VCenterConnector(BaseConnector):
         requête.raise_for_status()
         return requête.json()
 
-    def enrich_vm(self, vm_id: str, vm: dict) -> dict:
+    def enrich_vm(self, vm_id: str, _vm: dict) -> dict: # Prend en argument l'id d'une VM et renvoie le dictionnaire associé avec les données de la VM, deux requêtes pour récuperer l'IP en plus.
         """Deux appels vCenter : détails VM + identité guest."""
         r_details = requests.get(
             f"{self.base_url}/api/vcenter/vm/{vm_id}",
@@ -51,12 +51,14 @@ class VCenterConnector(BaseConnector):
         )
         r_details.raise_for_status()
         details = r_details.json()
+        # print(details)
         time.sleep(0.3)
 
         r_guest = requests.get(
             f"{self.base_url}/api/vcenter/vm/{vm_id}/guest/identity",
             headers=self.headers, verify=self.verify, timeout=10
         )
+        # guest/identity peut être indisponible (VM éteinte) on tolère
         guest = r_guest.json() if r_guest.status_code == 200 else {}
 
         return {
@@ -66,7 +68,7 @@ class VCenterConnector(BaseConnector):
             },
         }
     
-    def build_vm_payload(self, vm_id: str, enriched: dict) -> dict:
+    def build_vm_payload(self, vm_id: str, enriched: dict) -> dict: # Prend en argument l'id d'une vm et le dictionnaire d'infos d'une VM. Renvoie un dictionnaire adapté à Mercator.
         cpu     = enriched.get("cpu", {}).get("count")
         mem_go  = round(enriched.get("memory", {}).get("size_MiB", 0) / 1024, 1)
         ip      = enriched.get("guest", {}).get("ip_address", "")
@@ -83,7 +85,7 @@ class VCenterConnector(BaseConnector):
             "disk": int(round(disks_list[0].get("capacity", 0) / 1024**3, 1)) if disks_list else 0 # A changer, selon les cas !
         }
     
-    def build_cluster_payload(self, cluster_id: str, cluster: dict) -> dict:
+    def build_cluster_payload(self, cluster_id: str, cluster: dict) -> dict: # Prend en argument l'id d'un cluster et le dictionnaire d'infos d'un cluster. Renvoie un dictionnaire adapté à Mercator.
         return {
             "name":       cluster.get("name", ""),
             "ext_refs": f"{{{self.name}}}{cluster_id}",
