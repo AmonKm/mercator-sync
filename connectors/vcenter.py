@@ -11,7 +11,7 @@ from .base import BaseConnector
 
 class VCenterConnector(BaseConnector):
 
-    def authenticate(self) -> None: # Méhode pour l'authentification. Créer un header avec le login mdp et créer les variables selon l'instance. Ne renvoie rien.
+    def authenticate(self) -> None: # Méthode pour l'authentification. Créer un header avec le login mdp et créer les variables selon l'instance. Ne renvoie rien.
         user   = os.environ[self.config["auth"]["username_env"]] # On prend le login du fichier env en passant par le fichier yaml
         pwd    = os.environ[self.config["auth"]["password_env"]] # On prend le password du fichier env en passant par le fichier yaml
         verify = self.config.get("verify_ssl", True)
