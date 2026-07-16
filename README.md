@@ -9,7 +9,6 @@
 ![Status](https://img.shields.io/badge/Statut-En%20développement-orange)
 
 ## FR 🇫🇷
-# Mercator-sync
 ## Contexte
 Ce repo Gihtub est une **réponse** à un besoin principal : 
 
@@ -86,7 +85,6 @@ cd /Registre-sync
 python3 data-processings-sync.py
 ```
 # EN 🇬🇧
-# Mercator-sync
 ## Context
 This GitHub repository was created to address the following need:
 
