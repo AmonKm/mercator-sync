@@ -51,14 +51,12 @@ class VCenterConnector(BaseConnector):
         )
         r_details.raise_for_status()
         details = r_details.json()
-        # print(details)
         time.sleep(0.3)
 
         r_guest = requests.get(
             f"{self.base_url}/api/vcenter/vm/{vm_id}/guest/identity",
             headers=self.headers, verify=self.verify, timeout=10
         )
-        # guest/identity peut être indisponible (VM éteinte) on tolère
         guest = r_guest.json() if r_guest.status_code == 200 else {}
 
         return {
