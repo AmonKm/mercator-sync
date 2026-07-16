@@ -16,7 +16,7 @@ class XoaConnector(BaseConnector):
 
         requête = requests.get(
             f"{self.base_url}/rest/v0/pools/{pool_id}",
-            cookies=self.cookies, verify=self.verify
+            cookies=self.cookies, verify=self.verify, timeout=10
         )
 
         requête.raise_for_status()
@@ -30,7 +30,7 @@ class XoaConnector(BaseConnector):
        requête= requests.get(
             f"{self.base_url}/rest/v0/vms",
             params={"filter": f"$pool:{cluster_id}", "fields": "id,name_label,power_state"},
-            cookies=self.cookies, verify=self.verify
+            cookies=self.cookies, verify=self.verify, timeout=10
         )
        requête.raise_for_status()
        return requête.json()
@@ -38,7 +38,7 @@ class XoaConnector(BaseConnector):
     def enrich_vm(self, vm_id: str, _vm: dict) -> dict:
         requête= requests.get(
             f"{self.base_url}/rest/v0/vms/{vm_id}",
-            cookies=self.cookies, verify=self.verify
+            cookies=self.cookies, verify=self.verify, timeout=10
         )
         requête.raise_for_status()
         return requête.json()
@@ -64,7 +64,7 @@ class XoaConnector(BaseConnector):
             "cpu":              cpu,
             "memory":           mem_go,
             "attributes":       attributs,
-            "ext_refs": f"{{{self.name}}}{vm_id}", # on l'utilise enfin ! A voir pour ajouter de plusieurs sources...
+            "ext_refs": f"{{{self.name}}}{vm_id}",
         }
     
     def build_cluster_payload(self, cluster_id: str, cluster: dict) -> dict:
