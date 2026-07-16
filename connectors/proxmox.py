@@ -5,7 +5,7 @@ from .base import BaseConnector
 
 class ProxmoxConnector(BaseConnector):
 
-    def authenticate(self) -> None: # Méhode pour l'authentification. Créer un header avec le login mdp et créer les variables selon l'instance. Ne renvoie rien.
+    def authenticate(self) -> None: # Méthode pour l'authentification. Créer un header avec le login mdp et créer les variables selon l'instance. Ne renvoie rien.
         token_id  = os.environ[self.config["auth"]["user_env"]]
         token_secret = os.environ[self.config["auth"]["token_env"]]
         self.headers = {"Authorization": f"PVEAPIToken={token_id}={token_secret}"}
