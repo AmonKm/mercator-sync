@@ -5,7 +5,7 @@ from .base import BaseConnector
 
 class XoaConnector(BaseConnector): # Cette classe hérite directement de BaseConnector 
 
-    def authenticate(self) -> None: # Méhode pour l'authentification. Créer un cookie avec le token et créer les variables selon l'instance. Ne renvoie rien.
+    def authenticate(self) -> None: # Méthode pour l'authentification. Créer un cookie avec le token et créer les variables selon l'instance. Ne renvoie rien.
         token = os.environ[self.config["auth"]["token_env"]]
         self.cookies = {"authenticationToken": token}
         self.verify  = self.config.get("verify_ssl", True)
