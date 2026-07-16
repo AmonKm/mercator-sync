@@ -13,9 +13,10 @@ class ProxmoxConnector(BaseConnector):
         self.base_url = os.environ[self.config["base_url"]]
         
     def fetch_clusters(self) -> list[dict]:
+
         requête = requests.get(
             f"{self.base_url}/api2/json/nodes",
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
         requête.raise_for_status()
 
@@ -24,23 +25,23 @@ class ProxmoxConnector(BaseConnector):
     def fetch_vms(self, cluster_id: str) -> list[dict]:
        requête= requests.get(
             f"{self.base_url}/api2/json/nodes/{cluster_id}/qemu",
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
        requête.raise_for_status()
        return requête.json()["data"]
 
     def enrich_vm(self, vm_id: str, vm: dict) -> dict:
         node = vm.get("node", "pve")
-        requête= requests.get( # Les infos de base
+        requête= requests.get(
             f"{self.base_url}/api2/json/nodes/{node}/qemu/{vm_id}/config",
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
         requête.raise_for_status()
         data = requête.json()["data"]
 
-        requête_ip = requests.get( # Pour obtenir l'ip mais attention il est nécessaire d'installer l'agent sur les vms pour toute la branche /agent (tuto à faire...)
+        requête_ip = requests.get(
             f"{self.base_url}/api2/json/nodes/{node}/qemu/{vm_id}/agent/network-get-interfaces",
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
 
         ips = ""
@@ -49,12 +50,12 @@ class ProxmoxConnector(BaseConnector):
             for interface in requête_ip.json().get("data", {}).get("result", []):
                 for sous_interface in interface.get("ip-addresses", []) :
                     if sous_interface.get("ip-address-type") == "ipv4" and not sous_interface["ip-address"].startswith("127."):
-                        ips += f"{sous_interface['ip-address']} " if ips else sous_interface["ip-address"] # à revoir
+                        ips += f"{sous_interface['ip-address']} " if ips else sous_interface["ip-address"]
         data["ips"] = ips
 
-        requête_os = requests.get( # Toujours par l'agent pour obtenir l'OS correct
+        requête_os = requests.get(
             f"{self.base_url}/api2/json/nodes/{node}/qemu/{vm_id}/agent/get-osinfo",
-            headers=self.headers, verify=self.verify
+            headers=self.headers, verify=self.verify, timeout=10
         )
 
         os_name = ""
@@ -71,7 +72,7 @@ class ProxmoxConnector(BaseConnector):
         mem_go = round(int(enriched.get("memory", 0)) / 1024, 1)
         os_name = enriched.get("os_name", "")
         attributs = f"{self.name}"
-# A reformuler partout pour que ça soit "uniforme"
+
         return {
             "name": enriched.get("name", "")[:32],
             "description":      f"VM importée de : {self.name} ({vm_id})",
