@@ -80,7 +80,7 @@ class VCenterConnector(BaseConnector):
             "memory":           mem_go or 0,
             "attributes":       f"{self.config['name_id']}", # A modifier si l'on veut faire un ajout
             "ext_refs": f"{{{self.name}}}{vm_id}",
-            "disk": round(disks_list[0].get("capacity", 0) / 1024**3, 1) if disks_list else 0 # A changer, selon les cas !
+            "disk": int(round(disks_list[0].get("capacity", 0) / 1024**3, 1)) if disks_list else 0 # A changer, selon les cas !
         }
     
     def build_cluster_payload(self, cluster_id: str, cluster: dict) -> dict:
