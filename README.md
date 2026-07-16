@@ -82,7 +82,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 cd /Registre-sync
-python data-processings-sync.py
+python3 data-processings-sync.py
 ```
 ### Template Grist sur lequel on se base ici :
 
