@@ -142,12 +142,12 @@ https://grist.numerique.gouv.fr/o/docs/p/templates
 
 Then:
 
-- Click **"Data Protection Register"**.
+- Click **"Data Protection Register"**. If you don't see it, click **"Registre Protection des données"**.
 - Click **"Add"**.
 - Add a new page.
 - Create a new table.
 - Rename it **mercator_mapping**.
-- Place it under **"PROCESSINGS (script)"**.
+- Place it under **"PROCESSINGS (script)"**. **Warning** : This may appear as "TRAITEMENTS (script)".
 
 ```
 This setup will be automated in a future release (at least partially and directly from the script).
