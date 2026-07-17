@@ -25,6 +25,8 @@ sources:
     base_url: XOA_URL
     pool_id: "mon_pool_id"
     auth:
+      username_env: XOA_USER
+      password_env: XOA_PASS
       token_env: XOA_TOKEN
     verify_ssl: false
     enabled: true
