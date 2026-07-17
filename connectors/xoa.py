@@ -6,10 +6,22 @@ from .base import BaseConnector
 class XoaConnector(BaseConnector): # Cette classe hérite directement de BaseConnector 
 
     def authenticate(self) -> None: # Méthode pour l'authentification. Créer un cookie avec le token et créer les variables selon l'instance. Ne renvoie rien.
-        token = os.environ[self.config["auth"]["token_env"]]
-        self.cookies = {"authenticationToken": token}
-        self.verify  = self.config.get("verify_ssl", True)
+        # token = os.environ[self.config["auth"]["token_env"]]
+        # self.cookies = {"authenticationToken": token}
+        # self.verify  = self.config.get("verify_ssl", True)
         self.base_url = os.environ[self.config["base_url"]]
+        user  = os.environ[self.config["auth"]["username_env"]]
+        pwd   = os.environ[self.config["auth"]["password_env"]]
+        self.verify = self.config.get("verify_ssl", True)
+        
+        requête = requests.post(
+            f"{self.base_url}/rest/v0/users/me/authentication_tokens",
+            auth=(user, pwd), verify=self.verify,
+            json={"description": "token mercator-sync auto", "expiresIn": "1 hour" }
+        )
+        requête.raise_for_status()
+        token = requête.json()["token"]["id"]  
+        self.cookies = {"authenticationToken": token}
 
     def fetch_clusters(self) -> list[dict]: # Permet d'aller chercher un cluster souhaité. Renvoie une liste de dictionnaire.
         pool_id = self.config["pool_id"]
