@@ -146,7 +146,7 @@ Then:
 - Click **"Add"**.
 - Add a new page.
 - Create a new table.
-- Rename it **mercator_mapping**.
+- Rename it **mercator_mappage**.
 - Place it under **"PROCESSINGS (script)"**. **Warning** : This may appear as "TRAITEMENTS (script)".
 
 ```
