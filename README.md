@@ -106,7 +106,8 @@ It also includes a script to synchronize a **Grist processing register** with Me
 - Proxmox
 
 ### Architecture
-<img width="1312" height="1352" alt="github_schemzz drawio" src="https://github.com/user-attachments/assets/aa347dc4-fb35-4885-a4ed-d09a4c3f3e2f" />
+<img width="1313" height="1352" alt="schema-git drawio" src="https://github.com/user-attachments/assets/201dec34-d85a-4f10-a06d-35e2339957c6" />
+
 
 ### Clone the repository and get started:
 ```bash
@@ -133,7 +134,8 @@ python sync.py --config config/sources.yaml  # use an alternative configuration 
 - Grist
 
 ### Architecture
-<img width="1370" height="430" alt="github-gri drawio" src="https://github.com/user-attachments/assets/361dd847-4c76-459f-9126-12aa2b07df77" />
+<img width="1371" height="430" alt="schema-grist drawio" src="https://github.com/user-attachments/assets/8a3ce0b6-7ebe-4a9c-b958-7efe0378cdfb" />
+
 
 This script relies on the use of a template available in your Grist workspace.
 
