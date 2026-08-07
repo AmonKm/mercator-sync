@@ -1,9 +1,11 @@
 # Roadmap
 
 ### Prévu aôut :
-- [ ] Commentaires en FR et EN
-- [ ] Gestion des objets orphelins - En cours
-- [ ] Petit script de gestion du .env
+- [ ] Commentaires en FR et EN - Deadline : 12/08/2026
+- [ ] Gestion des objets orphelins - Deadline 21/08/2026
+- [ ] Petit script de gestion du .env - Aucune Deadline
+- [ ] Sécurisation et revu du code - Aucune Deadline
+- [ ] Meilleure séparation et/ou utilisation entre Grist et les sources de virtualisations - Deadline 21/08/2026
 
 ### Prévu mais réalisation indéfinie :
 - [ ] Intégration avec PETL (Multi-src, consolider une table commune)
