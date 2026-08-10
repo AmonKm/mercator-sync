@@ -1,3 +1,5 @@
+# FR : Gestion des sources
+# EN : Sources management
 sources:
   vcenter_prod_R:
     type: vcenter
@@ -48,6 +50,8 @@ destination:
       username_env: MERCATOR_USER
       password_env: MERCATOR_PASS
 
+# FR : Listes des endpoints et des clé à utiliser selon le type de la source
+# EN : Lists of endpoints and keys to use according to the type of source
 mappings:
   vcenter:
     cluster:
@@ -78,7 +82,7 @@ mappings:
       mercator_endpoint: /api/logical-servers
       mercator_key: proxmox_id
       source_key: vmid
-
+#dev
 sync:
   orphan_tag: "etat_sync:orphelin"
   dry_run: false
