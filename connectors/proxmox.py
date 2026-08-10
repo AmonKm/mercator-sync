@@ -7,7 +7,7 @@ from .base import BaseConnector
 class ProxmoxConnector(BaseConnector):
 
     def authenticate(self) -> None: 
-        # FR : Méthode pour l'authentification. Crée un header avec le login/mdp et crée les variables selon l'instance. Ne renvoie rien.
+        # FR : Méthode pour l'authentification. Crée un header avec le l'id / token API et crée les variables selon l'instance. Ne renvoie rien.
         # EN : Authentication method. Builds a header with the login/password and sets the instance variables accordingly. Returns None.
         token_id  = os.environ[self.config["auth"]["user_env"]]
         token_secret = os.environ[self.config["auth"]["token_env"]]
