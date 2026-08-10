@@ -2,17 +2,22 @@ import os
 import requests
 from .base import BaseConnector
 
-
+# FR : Classe Proxmox étant une sous-instance de la classe "BaseConnector" pour permettre de se baser sur ses méthodes.
+# EN : Proxmox class, a subclass of BaseConnector, to inherit its methods.
 class ProxmoxConnector(BaseConnector):
 
-    def authenticate(self) -> None: # Méthode pour l'authentification. Créer un header avec le login mdp et créer les variables selon l'instance. Ne renvoie rien.
+    def authenticate(self) -> None: 
+        # FR : Méthode pour l'authentification. Crée un header avec le login/mdp et crée les variables selon l'instance. Ne renvoie rien.
+        # EN : Authentication method. Builds a header with the login/password and sets the instance variables accordingly. Returns None.
         token_id  = os.environ[self.config["auth"]["user_env"]]
         token_secret = os.environ[self.config["auth"]["token_env"]]
         self.headers = {"Authorization": f"PVEAPIToken={token_id}={token_secret}"}
         self.verify  = self.config.get("verify_ssl", True)
         self.base_url = os.environ[self.config["base_url"]]
         
-    def fetch_clusters(self) -> list[dict]: # Permet d'aller chercher l'ensemble des clusters. Renvoie une liste de dictionnaire, la liste des clusters...
+    def fetch_clusters(self) -> list[dict]: 
+        # FR : Méthode qui permet d'aller chercher l'ensemble des clusters. Renvoie une liste de dictionnaires, la liste des clusters.
+        # EN : Method that fetches all clusters. Returns a list of dictionaries (the list of clusters).     
 
         requête = requests.get(
             f"{self.base_url}/api2/json/nodes",
@@ -22,15 +27,19 @@ class ProxmoxConnector(BaseConnector):
 
         return requête.json()["data"]
 
-    def fetch_vms(self, cluster_id: str) -> list[dict]: # Prend en argument l'id d'un cluster pour parcourir les VMs de ce cluster. Renvoie une liste de dictionnaire (VMs).
-       requête= requests.get(
-            f"{self.base_url}/api2/json/nodes/{cluster_id}/qemu",
-            headers=self.headers, verify=self.verify, timeout=10
-        )
-       requête.raise_for_status()
-       return requête.json()["data"]
+    def fetch_vms(self, cluster_id: str) -> list[dict]: 
+        # FR : Méthode qui prend en argument l'id d'un cluster pour parcourir les VMs de ce cluster. Renvoie une liste de dictionnaires (VMs).
+        # EN : Method that takes a cluster id as argument to loop over its VMs. Returns a list of dictionaries (VMs).
+        requête= requests.get(
+             f"{self.base_url}/api2/json/nodes/{cluster_id}/qemu",
+             headers=self.headers, verify=self.verify, timeout=10
+         )
+        requête.raise_for_status()
+        return requête.json()["data"]
 
-    def enrich_vm(self, vm_id: str, vm: dict) -> dict: # Prend en argument l'id d'une VM et son dictionnaire de données et renvoie le dictionnaire associé avec les données de la VM, deux requêtes pour récuperer l'IP en plus.
+    def enrich_vm(self, vm_id: str, vm: dict) -> dict: 
+        # FR : Méthode qui prend en argument l'id d'une VM et son dictionnaire de données et renvoie le dictionnaire associé avec les données de la VM, deux requêtes pour récupérer l'IP en plus.
+        # EN : Method that takes a VM id and its data dictionary as arguments, and returns the dictionary enriched with the VM's data. Two extra requests are made to retrieve the IP.
         node = vm.get("node", "pve")
         requête= requests.get(
             f"{self.base_url}/api2/json/nodes/{node}/qemu/{vm_id}/config",
@@ -45,7 +54,8 @@ class ProxmoxConnector(BaseConnector):
         )
 
         ips = ""
-        # Cas spécifique : la structure de données oblige à parcourir par sous interface, ici on met plusieurs IPs si disponibles et on crée une entrée dans le dico.
+        # FR : Cas spécifique : la structure de données oblige à parcourir par sous-interface, ici on met plusieurs IPs si disponibles et on crée une entrée dans le dico.
+        # EN : Specific case : the data model requires looping over sub-interfaces; here we set several IPs if available and add an entry to the dictionar
         if requête_ip.status_code == 200:
             for interface in requête_ip.json().get("data", {}).get("result", []):
                 for sous_interface in interface.get("ip-addresses", []) :
@@ -67,7 +77,9 @@ class ProxmoxConnector(BaseConnector):
 
         return data
 
-    def build_vm_payload(self, vm_id: str, enriched: dict) -> dict: # Prend en argument l'id d'une vm et le dictionnaire d'infos d'une VM. Renvoie un dictionnaire adapté à Mercator.
+    def build_vm_payload(self, vm_id: str, enriched: dict) -> dict: 
+        # FR : Méthode qui prend en argument l'id d'une vm et le dictionnaire d'infos d'une VM. Renvoie un dictionnaire adapté à Mercator.
+        # EN : Method that takes a VM id and its info dictionary as arguments. Returns a dictionary formatted for Mercator.
         cpu    = enriched.get("cores", 1) * enriched.get("sockets", 1)
         mem_go = round(int(enriched.get("memory", 0)) / 1024, 1)
         os_name = enriched.get("os_name", "")
@@ -84,7 +96,9 @@ class ProxmoxConnector(BaseConnector):
             "ext_refs": f"{{{self.name}}}{vm_id}",
         }
     
-    def build_cluster_payload(self, cluster_id: str, _cluster: dict) -> dict: # Prend en argument l'id d'un cluster. Renvoie un dictionnaire adapté à Mercator.
+    def build_cluster_payload(self, cluster_id: str, _cluster: dict) -> dict: 
+        # FR : Méthode qui prend en argument l'id d'un cluster. Renvoie un dictionnaire adapté à Mercator.
+        # EN : Method that takes a cluster id as argument. Returns a dictionary formatted for Mercator.
         return {
             "name":       cluster_id[:32],
             "ext_refs":   f"{{{self.name}}}{cluster_id}",
