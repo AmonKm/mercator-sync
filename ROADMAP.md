@@ -1,7 +1,7 @@
 # Roadmap
 
 ### Prévu aôut :
-- [ ] Commentaires en FR et EN - Deadline : 12/08/2026
+- [X] Commentaires en FR et EN - Deadline : 12/08/2026
 - [ ] Gestion des objets orphelins - Deadline 21/08/2026
 - [ ] Petit script de gestion du .env - Aucune Deadline
 - [ ] Sécurisation et revu du code - Aucune Deadline
