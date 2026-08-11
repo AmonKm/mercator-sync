@@ -22,7 +22,6 @@ import requests
 import yaml
 from dotenv import load_dotenv
 load_dotenv(override=True)
-print(os.environ.get("MERCATOR_USER", "NON CHARGÉ"))
 
 from connectors import REGISTRY
 
@@ -95,17 +94,30 @@ class MercatorClient:
                         index[val] = item["id"]
         return index
 
-# FR : Fonction qui effectue les requêtes pour créer les objets souhaités
-# EN : Function that performs the requests to create the desired objects
+    # FR : Récupère un objet Mercator par son chemin complet
+    # EN : Fetches a Mercator object by its full path
+    def get(self, path: str) -> dict:
+        requête = requests.get(f"{self.base_url}{path}", headers=self.headers, timeout=10)
+        requête.raise_for_status()
+        return requête.json().get("data", requête.json())
+
+    # FR : Met à jour un objet Mercator par son chemin complet
+    # EN : Updates a Mercator object by its full path
+    def patch(self, path: str, payload: dict) -> dict:
+        requête = requests.patch(f"{self.base_url}{path}", json=payload, headers=self.headers, timeout=10)
+        if not requête.ok:
+            log.error("PATCH %s failed (%s): %s", path, requête.status_code, requête.text)
+        requête.raise_for_status()
+        return requête.json()
+
+    # FR : Fonction qui effectue les requêtes pour créer les objets souhaités
+    # EN : Function that performs the requests to create the desired objects
     def upsert(self, endpoint: str, index: dict, key_value: str, payload: dict) -> int | None: 
         # FR : Prend en argument l'endpoint visé, le dictionnaire d'index ci-dessus, la clé source, et le payload mappé
         # EN : Takes the target endpoint, the index dict above, the source key, and the mapped payload
         if self.dry_run:
             action = "PATCH" if key_value in index else "POST"
             log.info("[dry-run] %s %s  key=%s", action, endpoint, key_value)
-            print(f"response_data cluster : {response_data}")
-            print(f"index : {index}")
-            print(f"key_value : {key_value}")
             return 
 
         if key_value in index: 
@@ -131,28 +143,40 @@ class MercatorClient:
         if isinstance(response_data, list):
             return index.get(key_value)
         return response_data.get("id")
-# Work in progress :D
-    # def tag_orphans(self, endpoint: str, orphan_tag: str, seen_keys: set, mercator_key: str) -> None: # A revoir
-    #     requête = requests.get(f"{self.base_url}{endpoint}", headers=self.headers)
-    #     requête.raise_for_status()
-    #     for item in requête.json():
-    #         ext_refs = item.get("ext_refs", "") or ""
-    #         if item and item not in seen_keys:
-    #             new_ext_refs = ext + f" {orphan_tag}"
-    #             requests.patch(
-    #                 f"{self.base_url}{endpoint}/{item['id']}",
-    #                 json={"attributes": new_ext_refs.strip()},
-    #                 headers=self.headers
-    #             )
-    #             time.sleep(0.5)
-    #             log.info("Orphelin tagué : %s  id=%s", item.get("name", "?"), item["id"])
+
+
+
+
+def handle_orphans(mercator, index, orphan_ids, mapping, sync_cfg):
+    # FR : Pour chaque VM absente du dernier pull, on tague sans supprimer ni renommer
+    # EN : For each VM missing from the last pull, we tag it without deleting or renaming
+    for source_key in orphan_ids:
+        mercator_id = index[source_key]
+        try:
+            objet = mercator.get(f"{mapping['mercator_endpoint']}/{mercator_id}")
+            current_name = objet.get("name", "")
+            current_attributes_str = objet.get("attributes", "")
+            current_attributes_tokens = current_attributes_str.split()
+
+            if sync_cfg["orphan_tag"] in current_attributes_tokens:
+                continue  # FR : deja tague, on ne repasse pas dessus | EN : Already tagged, skipping 
+
+            payload = {
+                "name": current_name,
+                "attributes": f"{current_attributes_str} {sync_cfg['orphan_tag']}".strip(),
+            }
+            mercator.patch(f"{mapping['mercator_endpoint']}/{mercator_id}", payload)
+            print(f"[ORPHAN] {current_name} ({source_key}) tague comme orphelin")
+        except Exception as e:
+            log.error("Echec du tag orphelin pour %s (mercator_id=%s) : %s", source_key, mercator_id, e)
+            continue
+
 
 
 # ---------------------------------------------------------------------------
 # Code principal - Contient la gestion des sources
 # Main code - Contains source management
 # ---------------------------------------------------------------------------
-
 
 # FR : Fonction qui orchestre le tout, elle fait appel aux méthodes pour créer les mappings et mettre à jour ou créer les objets pour les sources souhaitées
 # EN : Function that orchestrates everything; it calls the methods to build mappings and update or create the objects for the target sources
@@ -191,18 +215,25 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
     seen_vm_keys = set()
     mercator_cluster_id = None
     # --- Extract + Transform + Load ---
-    clusters = connector.fetch_clusters()
+    try:
+        clusters = connector.fetch_clusters()
+    except Exception as e:
+        log.warning("Récupération des clusters échouée pour %s : %s", source_name, e)
+        return
+
     for cluster in clusters:
+        mercator_cluster_id = None
         cluster_id = cluster[cluster_cfg["source_key"]] if cluster_cfg else cluster["id"]
 
-        if cluster_cfg: 
-            # FR : Pointe vers un endpoint de cluster 
-            # EN : Points to a cluster endpoint
+        if cluster_cfg:
             payload_cluster = connector.build_cluster_payload(cluster_id, cluster)
             mercator_cluster_id = mercator.upsert(cluster_cfg["mercator_endpoint"], cluster_index, cluster_id, payload_cluster)
             log.info("Cluster : %s", payload_cluster.get("name", cluster_id))
-
-        vms = connector.fetch_vms(cluster_id)
+        try:
+            vms = connector.fetch_vms(cluster_id)
+        except Exception as e:
+            log.warning("Récupération des VMs échouée pour le cluster %s : %s", cluster_id, e)
+            continue
         for vm in vms: 
             # FR : Parcours des VMs 
             # EN : Loop over VMs
@@ -229,12 +260,9 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
 
 
     if vm_cfg:
-        mercator.tag_orphans(
-            vm_cfg["mercator_endpoint"],
-            sync_cfg.get("orphan_tag", "etat_sync:orphelin"),
-            seen_vm_keys,
-            vm_cfg["mercator_key"],
-        )
+        orphan_ids = set(vm_index.keys()) - seen_vm_keys
+        if orphan_ids:
+            handle_orphans(mercator, vm_index, orphan_ids, vm_cfg, sync_cfg)
 
 
 # ---------------------------------------------------------------------------
