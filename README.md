@@ -112,7 +112,7 @@ Registre-sync/
 ```
  
 `registre_sync.py` réutilise directement le `MercatorClient` défini dans `sync.py`.
- 
+`Registres-Protection-des-Donnees-template.grist` est aussi disponible, c'est un template Grist de Registre des traitements.
 ### Configuration
  
 En plus de la section `destination.mercator` déjà présente, `config/sources.yaml` contient une section `destination.grist` :
@@ -247,8 +247,9 @@ Registre-sync/
 └── transform.py        # Grist field -> Mercator payload mapping
 ```
  
-`registre_sync.py` reuses the `MercatorClient` defined in `sync.py` directly — no duplicated Mercator authentication logic.
- 
+`registre_sync.py` reuses the `MercatorClient` defined in `sync.py` directly, no duplicated Mercator authentication logic.
+<br>
+`Registres-Protection-des-Donnees-template.grist` is also available, it is a Grist model for the processing registry.
 ### Configuration
  
 In addition to the existing `destination.mercator` section, `config/sources.yaml` now includes a `destination.grist` section:
