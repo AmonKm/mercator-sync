@@ -49,6 +49,13 @@ destination:
     auth:
       username_env: MERCATOR_USER
       password_env: MERCATOR_PASS
+  grist:
+    base_url: "https://grist.numerique.gouv.fr"
+    table_id: Registre_des_Fiches_de_Traitements
+    mapping_table_id: Mercator_mappage
+    auth:
+      doc_id_env: GRIST_DOC_ID
+      token_env: GRIST_API_TOKEN
 
 # FR : Listes des endpoints et des clé à utiliser selon le type de la source
 # EN : Lists of endpoints and keys to use according to the type of source
