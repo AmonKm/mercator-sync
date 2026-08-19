@@ -7,7 +7,7 @@
 ![Proxmox](https://img.shields.io/badge/Proxmox-API-4A90D9?logo=proxmox&logoColor=white)
 ![Grist](https://img.shields.io/badge/Grist-API-4A90D9?logo=databricks&logoColor=white)
 ![Status](https://img.shields.io/badge/Statut-En%20développement-orange)
-![License](https://img.shields.io/github/license/AmonKm/mercator-sync)
+![License](https://img.shields.io/github/license/AmonKm/mercator-sync?cacheSeconds=1)
 ![Last Commit](https://img.shields.io/github/last-commit/AmonKm/mercator-sync)
 ![Release](https://img.shields.io/github/v/release/AmonKm/mercator-sync)
  
@@ -85,20 +85,17 @@ python sync.py --config config/sources.yaml   # chemin alternatif vers le fichie
 ### Fonctionnement
  
 <img width="1370" height="430" alt="github-gri drawio" src="https://github.com/user-attachments/assets/361dd847-4c76-459f-9126-12aa2b07df77" />
-Ce script se base sur l'utilisation d'un template mis à disposition dans votre espace Grist. <br>
-Il suffit d'aller sur ce lien : https://grist.numerique.gouv.fr/o/docs/p/templates<br>
-Puis de cliquer sur le template "Registre Protection des données".<br>
-Une fois fait, il suffit de :
+
+Ce script se base sur l'utilisation d'un template mis à disposition dans ce dépôt : <br>`Registre-sync/Registres-Protection-des-Donnees-template.grist`, un template Grist de Registre des traitements.
+<br>
+Pour l'ajouter à votre espace :
  
+- Aller dans votre espace
 - Cliquer sur "Ajouter"
-- Ajouter une page
-- Table
-- Nouvelle Table
-- La renommer **mercator_mappage**
-- La placer sous "TRAITEMENTS (script)"
-```
-Cette procédure sera automatiser à l'avenir (au moins en partie et directement dans le script)
-```
+- Cliquer sur "Importer un document"
+- Choisir le modèle
+
+
  
 ### Structure
  
@@ -112,7 +109,7 @@ Registre-sync/
 ```
  
 `registre_sync.py` réutilise directement le `MercatorClient` défini dans `sync.py`.
-`Registres-Protection-des-Donnees-template.grist` est aussi disponible, c'est un template Grist de Registre des traitements.
+
 ### Configuration
  
 En plus de la section `destination.mercator` déjà présente, `config/sources.yaml` contient une section `destination.grist` :
@@ -219,22 +216,17 @@ python sync.py --config config/sources.yaml  # use an alternative configuration 
 ### Architecture
  
 <img width="1371" height="430" alt="schema-grist drawio" src="https://github.com/user-attachments/assets/8a3ce0b6-7ebe-4a9c-b958-7efe0378cdfb" />
-This script relies on the use of a template available in your Grist workspace.
+
+This script relies on the use of a template available in this repository: <br>`Registre-sync/Registres-Protection-des-Donnees-template.grist`, a Grist model for the processing registry.
+<br>
+To add it to your workspace:
  
-Simply open the following link:
-https://grist.numerique.gouv.fr/o/docs/p/templates
- 
-Then:
- 
-- Click **"Data Protection Register"**. If you don't see it, click **"Registre Protection des données"**.
-- Click **"Add"**.
-- Add a new page.
-- Create a new table.
-- Rename it **mercator_mappage**.
-- Place it under **"PROCESSINGS (script)"**. **Warning**: This may appear as "TRAITEMENTS (script)".
-```
-This setup will be automated in a future release (at least partially and directly from the script).
-```
+- Go to your workspace
+- Click "Add"
+- Click "Import document"
+- Choose the template
+
+
  
 ### Structure
  
@@ -248,8 +240,7 @@ Registre-sync/
 ```
  
 `registre_sync.py` reuses the `MercatorClient` defined in `sync.py` directly, no duplicated Mercator authentication logic.
-<br>
-`Registres-Protection-des-Donnees-template.grist` is also available, it is a Grist model for the processing registry.
+
 ### Configuration
  
 In addition to the existing `destination.mercator` section, `config/sources.yaml` now includes a `destination.grist` section:
