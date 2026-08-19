@@ -97,10 +97,10 @@ class MercatorClient:
     # FR : Récupère un objet Mercator par son chemin complet
     # EN : Fetches a Mercator object by its full path
     def get(self, path: str) -> dict:
-        requête = requests.get(f"{self.base_url}{path}", headers=self.headers, timeout=10)
-        requête.raise_for_status()
-        return requête.json().get("data", requête.json())
-
+    	requête = requests.get(f"{self.base_url}{path}", headers=self.headers, timeout=10)
+    	requête.raise_for_status()
+    	data = requête.json()
+    	return data.get("data", data) if isinstance(data, dict) else data
     # FR : Met à jour un objet Mercator par son chemin complet
     # EN : Updates a Mercator object by its full path
     def patch(self, path: str, payload: dict) -> dict:
