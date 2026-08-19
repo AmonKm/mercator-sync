@@ -5,7 +5,7 @@
 - [X] Gestion des objets orphelins (VMs) - Deadline 21/08/2026
 - [ ] Petit script de gestion du .env - Aucune Deadline
 - [ ] Sécurisation et revu du code - Aucune Deadline
-- [ ] Meilleure séparation et/ou utilisation entre Grist et les sources de virtualisations - Deadline 21/08/2026
+- [X] Meilleure séparation et/ou utilisation entre Grist et les sources de virtualisations - Deadline 21/08/2026
 
 ### Prévu mais réalisation indéfinie :
 - [ ] Intégration avec PETL (Multi-src, consolider une table commune)
