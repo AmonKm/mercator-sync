@@ -6,7 +6,6 @@
 ![XOA](https://img.shields.io/badge/XOA-API-4A90D9?logo=cloudflare&logoColor=white)
 ![Proxmox](https://img.shields.io/badge/Proxmox-API-4A90D9?logo=proxmox&logoColor=white)
 ![Grist](https://img.shields.io/badge/Grist-API-4A90D9?logo=databricks&logoColor=white)
-![Status](https://img.shields.io/badge/Statut-En%20développement-orange)
 ![License](https://img.shields.io/github/license/AmonKm/mercator-sync?cacheSeconds=1)
 ![Last Commit](https://img.shields.io/github/last-commit/AmonKm/mercator-sync)
 ![Release](https://img.shields.io/github/v/release/AmonKm/mercator-sync)
