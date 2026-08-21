@@ -184,6 +184,7 @@ It also includes a script to synchronize a **Grist processing register** with Me
 ### Architecture
  
 <img width="1313" height="1352" alt="schema-git drawio" src="https://github.com/user-attachments/assets/201dec34-d85a-4f10-a06d-35e2339957c6" />
+
 ### Clone the repository and get started:
  
 ```bash
