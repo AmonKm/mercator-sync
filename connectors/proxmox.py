@@ -4,6 +4,8 @@ from .base import BaseConnector
 
 # FR : Classe Proxmox étant une sous-instance de la classe "BaseConnector" pour permettre de se baser sur ses méthodes.
 # EN : Proxmox class, a subclass of BaseConnector, to inherit its methods.
+# FR : ATTENTION : la récupération de l'IP et de l'OS repose sur le QEMU Guest Agent. Celui-ci doit être installé et activé sur la VM (et l'option "QEMU Guest Agent" cochée dans les options de la VM côté Proxmox), sinon ces requêtes échouent silencieusement et les champs "ips" / "os_name" restent vides.
+# EN : WARNING : IP and OS retrieval relies on the QEMU Guest Agent. It must be installed and enabled on the VM (and the "QEMU Guest Agent" option checked in the VM's Proxmox settings), otherwise these requests fail silently and the "ips" / "os_name" fields remain empty.
 class ProxmoxConnector(BaseConnector):
 
     def authenticate(self) -> None: 
