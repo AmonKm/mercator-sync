@@ -4,8 +4,6 @@ from .base import BaseConnector
 
 # FR : Classe Proxmox étant une sous-instance de la classe "BaseConnector" pour permettre de se baser sur ses méthodes.
 # EN : Proxmox class, a subclass of BaseConnector, to inherit its methods.
-# FR : ATTENTION : la récupération de l'IP et de l'OS repose sur le QEMU Guest Agent. Celui-ci doit être installé et activé sur la VM (et l'option "QEMU Guest Agent" cochée dans les options de la VM côté Proxmox), sinon ces requêtes échouent silencieusement et les champs "ips" / "os_name" restent vides.
-# EN : WARNING : IP and OS retrieval relies on the QEMU Guest Agent. It must be installed and enabled on the VM (and the "QEMU Guest Agent" option checked in the VM's Proxmox settings), otherwise these requests fail silently and the "ips" / "os_name" fields remain empty.
 class ProxmoxConnector(BaseConnector):
 
     def authenticate(self) -> None: 
@@ -42,6 +40,8 @@ class ProxmoxConnector(BaseConnector):
     def enrich_vm(self, vm_id: str, vm: dict) -> dict: 
         # FR : Méthode qui prend en argument l'id d'une VM et son dictionnaire de données et renvoie le dictionnaire associé avec les données de la VM, deux requêtes pour récupérer l'IP en plus.
         # EN : Method that takes a VM id and its data dictionary as arguments, and returns the dictionary enriched with the VM's data. Two extra requests are made to retrieve the IP.
+        # FR : ATTENTION : la récupération de l'IP et de l'OS repose sur le QEMU Guest Agent. Celui-ci doit être installé et activé sur la VM (et l'option "QEMU Guest Agent" cochée dans les options de la VM côté Proxmox), sinon ces requêtes échouent silencieusement et les champs "ips" / "os_name" restent vides.
+        # EN : WARNING : IP and OS retrieval relies on the QEMU Guest Agent. It must be installed and enabled on the VM (and the "QEMU Guest Agent" option checked in the VM's Proxmox settings), otherwise these requests fail silently and the "ips" / "os_name" fields remain empty.
         node = vm.get("node", "pve")
         requête= requests.get(
             f"{self.base_url}/api2/json/nodes/{node}/qemu/{vm_id}/config",
