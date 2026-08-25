@@ -102,6 +102,7 @@ Le script Grist est découpé en trois fichiers dans `Registre-sync/`, sur le m�
  
 ```
 Registre-sync/
+├── Registres-Protection-des-Donnees-template.grist # Modèle Grist
 ├── registre_sync.py   # Orchestration : boucle principale, CLI
 ├── grist_client.py    # Client API Grist (lecture des fiches, mappage applications)
 └── transform.py        # Mapping des champs Grist -> payload Mercator
@@ -234,6 +235,7 @@ The Grist script is split into three files under `Registre-sync/`, following the
  
 ```
 Registre-sync/
+├── Registres-Protection-des-Donnees-template.grist # "Grist" Template
 ├── registre_sync.py   # Orchestration: main loop, CLI
 ├── grist_client.py    # Grist API client (sheet reads, application mapping)
 └── transform.py        # Grist field -> Mercator payload mapping
