@@ -98,7 +98,7 @@ Pour l'ajouter à votre espace :
  
 ### Structure
  
-Le script Grist est découpé en trois fichiers dans `Registre-sync/`, sur le même principe que l'orchestrateur `sync.py` :
+Le script Grist est découpé en trois fichiers dans `Registre-sync/`, sur le même principe que l'orchestrateur `sync.py`, il existe un modèle Grist en plus de ces trois fichiers :
  
 ```
 Registre-sync/
@@ -231,7 +231,7 @@ To add it to your workspace:
  
 ### Structure
  
-The Grist script is split into three files under `Registre-sync/`, following the same pattern as the `sync.py` orchestrator:
+The Grist script is split into three files under `Registre-sync/`, following the same pattern as the `sync.py` orchestrator, there is a Grist template in addition to these three files :
  
 ```
 Registre-sync/
