@@ -1,23 +1,23 @@
 # FR : Gestion des sources
 # EN : Sources management
 sources:
-  vcenter_prod_R:
+  vcenter_prod_1:
     type: vcenter
-    name_id: vcenter-r
-    base_url: VCENTER_URL_R
+    name_id: vcenter-1
+    base_url: VCENTER_URL_1
     auth:
-      username_env: VCENTER_USER_R
-      password_env: VCENTER_PASS_R
+      username_env: VCENTER_USER_1
+      password_env: VCENTER_PASS_1
     verify_ssl: false
     enabled: true
 
-  vcenter_prod_I:
+  vcenter_prod_2:
     type: vcenter
-    name_id: vcenter-i
-    base_url: VCENTER_URL_I
+    name_id: vcenter-2
+    base_url: VCENTER_URL_2
     auth:
-      username_env: VCENTER_USER_I
-      password_env: VCENTER_PASS_I
+      username_env: VCENTER_USER_2
+      password_env: VCENTER_PASS_2
     verify_ssl: false
     enabled: true
 
@@ -89,7 +89,7 @@ mappings:
       mercator_endpoint: /api/logical-servers
       mercator_key: proxmox_id
       source_key: vmid
-#dev
+
 sync:
   orphan_tag: "etat_sync:orphelin"
   dry_run: false
