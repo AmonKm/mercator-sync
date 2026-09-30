@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-
+from .config_types import JsonDict, SourceConfig
 class BaseConnector(ABC):
     """
     FR : Interface commune pour toutes les sources de virtualisation.
     EN : Common interface for all virtualization sources.
     """
 
-    def __init__(self, name: str, config: dict):
+    def __init__(self, name: str, config: SourceConfig):
         self.name = name
         self.config = config
 
@@ -19,7 +19,7 @@ class BaseConnector(ABC):
         ...
 
     @abstractmethod
-    def fetch_clusters(self) -> list[dict]:
+    def fetch_clusters(self) -> list[JsonDict]:
         """
         FR : Retourne la liste brute des clusters.
         EN : Returns the raw list of clusters.
@@ -27,7 +27,7 @@ class BaseConnector(ABC):
         ...
 
     @abstractmethod
-    def fetch_vms(self, cluster_id: str) -> list[dict]:
+    def fetch_vms(self, cluster_id: str) -> list[JsonDict]:
         """
         FR : Retourne la liste brute des VMs pour un cluster donné.
         EN : Returns the raw list of VMs for a given cluster.
@@ -35,7 +35,7 @@ class BaseConnector(ABC):
         ...
 
     @abstractmethod
-    def enrich_vm(self, vm_id: str, vm: dict) -> dict:
+    def enrich_vm(self, vm_id: str, vm: JsonDict) -> JsonDict:
         """
         FR : Ajoute les détails guest (IP, OS...) au dict VM brut.
              Peut déclencher des appels supplémentaires (vCenter)
@@ -47,7 +47,7 @@ class BaseConnector(ABC):
         ...
 
     @abstractmethod
-    def build_vm_payload(self, vm_id: str, enriched: dict) -> dict:
+    def build_vm_payload(self, vm_id: str, enriched: JsonDict) -> JsonDict:
         """
         FR : Construit le payload Mercator pour une VM.
         EN : Builds the Mercator payload for a VM.
@@ -55,7 +55,7 @@ class BaseConnector(ABC):
         ...
 
     @abstractmethod
-    def build_cluster_payload(self, cluster_id: str, cluster: dict) -> dict:
+    def build_cluster_payload(self, cluster_id: str, cluster: JsonDict) -> JsonDict:
         """
         FR : Construit le payload Mercator pour un cluster.
         EN : Builds the Mercator payload for a cluster.

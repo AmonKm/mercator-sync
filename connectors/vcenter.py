@@ -4,19 +4,21 @@ import urllib3
 import time
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-from .base import BaseConnector
+from .base import BaseConnector, JsonDict
 # FR : Classe Vcenter étant une sous-instance de la classe "BaseConnector" pour permettre de se baser sur ses méthodes.
 # EN : Vcenter class, a subclass of BaseConnector, to inherit its methods.
 class VCenterConnector(BaseConnector):
 
     def authenticate(self) -> None: 
+        config = self.config 
+        if config["type"] != "vcenter":
+            raise TypeError(f"Config '{self.name}' inattendue pour VCenterConnector")
         # FR : Méthode pour l'authentification. Crée un header avec le login/mdp et crée les variables selon l'instance. Ne renvoie rien.
         # EN : Authentication method. Builds a header with the login/password and sets the instance variables accordingly. Returns None.
-        user   = os.environ[self.config["auth"]["username_env"]] 
-        pwd    = os.environ[self.config["auth"]["password_env"]]
+        user   = os.environ[config["auth"]["username_env"]] 
+        pwd    = os.environ[config["auth"]["password_env"]]
         verify = self.config.get("verify_ssl", True)
-        self.base_url = os.environ[self.config["base_url"]]
+        self.base_url = os.environ[config["base_url"]]
 
         requête = requests.post(
             f"{self.base_url}/api/session",
@@ -27,7 +29,7 @@ class VCenterConnector(BaseConnector):
         self.headers = {"vmware-api-session-id": requête.json()}
         self.verify  = verify
 
-    def fetch_clusters(self) -> list[dict]:
+    def fetch_clusters(self) -> list[JsonDict]:
         # FR : Méthode qui permet d'aller chercher l'ensemble des clusters. Renvoie une liste de dictionnaires, la liste des clusters.
         # EN : Method that fetches all clusters. Returns a list of dictionaries (the list of clusters).    
         requête = requests.get(
@@ -37,7 +39,7 @@ class VCenterConnector(BaseConnector):
         requête.raise_for_status()
         return requête.json()
 
-    def fetch_vms(self, cluster_id: str) -> list[dict]:
+    def fetch_vms(self, cluster_id: str) -> list[JsonDict]:
         # FR : Méthode qui prend en argument l'id d'un cluster pour parcourir les VMs de ce cluster. Renvoie une liste de dictionnaires (VMs).
         # EN : Method that takes a cluster id as argument to loop over its VMs. Returns a list of dictionaries (VMs).
         requête = requests.get(
@@ -48,7 +50,7 @@ class VCenterConnector(BaseConnector):
         requête.raise_for_status()
         return requête.json()
 
-    def enrich_vm(self, vm_id: str, _vm: dict) -> dict:
+    def enrich_vm(self, vm_id: str, vm: JsonDict) -> JsonDict:
         # FR : Méthode qui prend en argument l'id d'une VM et son dictionnaire de données et renvoie le dictionnaire associé avec les données de la VM, deux requêtes pour récupérer l'IP en plus.
         # EN : Method that takes a VM id and its data dictionary as arguments, and returns the dictionary enriched with the VM's data. Two extra requests are made to retrieve the IP.
         """Deux appels vCenter : détails VM + identité guest."""
@@ -64,7 +66,7 @@ class VCenterConnector(BaseConnector):
             f"{self.base_url}/api/vcenter/vm/{vm_id}/guest/identity",
             headers=self.headers, verify=self.verify, timeout=10
         )
-        guest = r_guest.json() if r_guest.status_code == 200 else {}
+        guest: JsonDict = r_guest.json() if r_guest.status_code == 200 else {}
 
         return {
             **details,
@@ -73,7 +75,7 @@ class VCenterConnector(BaseConnector):
             },
         }
     
-    def build_vm_payload(self, vm_id: str, enriched: dict) -> dict: 
+    def build_vm_payload(self, vm_id: str, enriched: JsonDict) -> JsonDict: 
         # FR : Méthode qui prend en argument l'id d'une vm et le dictionnaire d'infos d'une VM. Renvoie un dictionnaire adapté à Mercator.
         # EN : Method that takes a VM id and its info dictionary as arguments. Returns a dictionary formatted for Mercator.
         cpu     = enriched.get("cpu", {}).get("count")
@@ -92,7 +94,7 @@ class VCenterConnector(BaseConnector):
             "disk": int(round(disks_list[0].get("capacity", 0) / 1024**3, 1)) if disks_list else 0
         }
     
-    def build_cluster_payload(self, cluster_id: str, cluster: dict) -> dict:
+    def build_cluster_payload(self, cluster_id: str, cluster: JsonDict) -> JsonDict:
         # FR : Méthode qui prend en argument l'id d'un cluster. Renvoie un dictionnaire adapté à Mercator.
         # EN : Method that takes a cluster id as argument. Returns a dictionary formatted for Mercator.
         return {
