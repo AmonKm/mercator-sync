@@ -5,7 +5,7 @@ Synchronise le registre des fiches de traitement Grist vers les objets "data-pro
 Usage :
     python registre_sync.py                          # config par défaut
     python registre_sync.py --config ../config/sources.yaml
-    python registre_sync.py --dry-run                # aucune écriture Mercator
+    python registre_sync.py --dry-run                # aucune écriture Mercator ni Grist
 """
 """
 EN:
@@ -15,7 +15,7 @@ data-processings.
 Usage:
     python registre_sync.py                          # default config
     python registre_sync.py --config ../config/sources.yaml
-    python registre_sync.py --dry-run                 # no write to Mercator
+    python registre_sync.py --dry-run                 # no writting in Mercator and Grist
 """
 import argparse
 import logging
@@ -24,7 +24,7 @@ from pathlib import Path
  
 from dotenv import load_dotenv
 import yaml
- 
+
 RACINE = Path(__file__).resolve().parent.parent
 # FR : Racine du projet, pour retrouver sync.py et le .env peu importe le cwd
 # EN : Project root, to find sync.py and .env regardless of the cwd
@@ -46,8 +46,7 @@ STATUT_TRAITE = "✅ Fiche traitée"
 # FR : Boucle principale, prend les clients déjà authentifiés
 # EN : Main loop, takes the already-authenticated clients
 def sync_data_processings(mercator: MercatorClient, grist: GristClient) -> None:
-    grist.sync_applications_mercator(mercator)
-    app_index = grist.get_app_index()
+    app_index: dict[int,int] = grist.get_app_index()
  
     index = mercator.build_index("/api/data-processings", mercator_key="grist_uuid", source_name="Grist")
  
@@ -80,9 +79,8 @@ def main():
         configuration = yaml.safe_load(fichier_config)
  
     dry_run = arguments.dry_run or configuration.get("sync", {}).get("dry_run", False)
- 
+    grist = GristClient(configuration, dry_run=dry_run)
     mercator = MercatorClient(configuration, dry_run=dry_run)
-    grist = GristClient(configuration)
 
     # FR : Toujours exécuté, même en --mapping-only : sync_data_processings() a besoin
     #      d'un mappage à jour pour résoudre les colonnes Application_X des fiches.

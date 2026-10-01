@@ -12,12 +12,17 @@ sheets, managing the application mapping table).
 """
 import os
 import requests
- 
+import logging
+log = logging.getLogger(__name__)
+from connectors.config_types import JsonDict
+from sync import MercatorClient
+
 class GristClient:
     # FR : Classe permettant de gérer une session Grist et d'exposer les méthodes associées
     # EN : Class that manages a Grist session and exposes the related methods
-    def __init__(self, config: dict):
+    def __init__(self, config: JsonDict, dry_run: bool = False):
         base = config["destination"]["grist"]
+        self.dry_run = dry_run
         # FR : Prend l'entrée grist avec les différentes sous-entrées dans sources.yaml
         # EN : Get the grist entry and its sub-entries from sources.yaml
  
@@ -45,7 +50,7 @@ class GristClient:
  
     # FR : Récupère tous les records d'une table (fiches de traitement par défaut)
     # EN : Fetches all records from a table (processing sheets by default)
-    def get_records(self, table_id: str = None) -> list[dict]:
+    def get_records(self, table_id: str | None  = None) -> list[JsonDict]:
         table = table_id or self.table_id
         requête = requests.get(
             f"{self.base_url}/api/docs/{self.doc_id}/tables/{table}/records",
@@ -59,6 +64,9 @@ class GristClient:
     def delete_records(self, table_id: str, ids: list[int]) -> None:
         if not ids:
             return
+        if self.dry_run:
+            log.info("[dry-run] DELETE %s  ids=%s", table_id, ids)
+            return
         requête = requests.post(
             f"{self.base_url}/api/docs/{self.doc_id}/tables/{table_id}/data/delete",
             json=ids,
@@ -68,8 +76,11 @@ class GristClient:
  
     # FR : Crée une liste de records dans une table donnée
     # EN : Creates a list of records in a given table
-    def post_records(self, table_id: str, records: list[dict]) -> dict:
+    def post_records(self, table_id: str, records: list[JsonDict]) -> JsonDict:
         if not records:
+            return {}
+        if self.dry_run:
+            log.info("[dry-run] POST %s  %d records", table_id, len(records))
             return {}
         requête = requests.post(
             f"{self.base_url}/api/docs/{self.doc_id}/tables/{table_id}/records",
@@ -81,8 +92,11 @@ class GristClient:
  
     # FR : Met à jour une liste de records existants (par leur id Grist) dans une table donnée
     # EN : Updates a list of existing records (by their Grist id) in a given table
-    def patch_records(self, table_id: str, records: list[dict]) -> None:
+    def patch_records(self, table_id: str, records: list[JsonDict]) -> None:
         if not records:
+            return
+        if self.dry_run:
+            log.info("[dry-run] PATCH %s  %d records", table_id, len(records))
             return
         requête = requests.patch(
             f"{self.base_url}/api/docs/{self.doc_id}/tables/{table_id}/records",
@@ -103,14 +117,14 @@ class GristClient:
     #      A delete+repopulate changes those ids and breaks every link already
     #      set on the sheets, even when the content is identical. We therefore
     #      only delete rows whose Mercator application no longer exists.
-    def sync_applications_mercator(self, mercator) -> None:
+    def sync_applications_mercator(self, mercator:MercatorClient) -> None:
         existants = self.get_records(self.mapping_table_id)
         index = {record["fields"]["mercator_id"]: record["id"] for record in existants}
  
-        apps = mercator.get("/api/applications")
-        seen_mercator_ids = set()
-        a_creer = []
-        a_maj = []
+        apps: list[JsonDict] = mercator.get("/api/applications")
+        seen_mercator_ids:set[int] = set()
+        a_creer: list[JsonDict] = []
+        a_maj: list[JsonDict] = []
         for app in apps:
             seen_mercator_ids.add(app["id"])
             if app["id"] in index:
@@ -131,6 +145,6 @@ class GristClient:
  
     # FR : Construit l'index {grist_record_id: mercator_id} depuis la table de mappage
     # EN : Builds the {grist_record_id: mercator_id} index from the mapping table
-    def get_app_index(self) -> dict:
+    def get_app_index(self) -> dict[int, int]:
         records = self.get_records(self.mapping_table_id)
         return {record["id"]: record["fields"]["mercator_id"] for record in records}

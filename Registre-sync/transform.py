@@ -9,6 +9,8 @@ transform.py Grist -> Mercator transformation
 Groups the Grist field mapping and the construction of the data-processings payload expected by Mercator.
 """
 import datetime
+from connectors.config_types import JsonDict
+from typing import Any, cast
  
 LAWFULNESS_MAP = {
     "La personne concernée a consenti au traitement de ses données à caractère personnel pour une ou plusieurs finalités spécifiques": "lawfulness_consent",
@@ -43,18 +45,19 @@ DATA_COLLECT_MAP = {
  
 # FR : Filtre les valeurs "L" (résiduel du format Grist pour les listes)
 # EN : Filters out "L" values (leftover from Grist's list format)
-def clean_list(val: list) -> list:
+def clean_list(val: Any) -> list[str]:
     if isinstance(val, list):
-        return [v for v in val if v != "L"]
+        elements = cast(list[str], val)
+        return [v for v in elements if v != "L"]
     return []
  
  
-def list_to_str(val: list) -> str:
+def list_to_str(val: Any) -> str:
     return ", ".join(clean_list(val))
  
  
-def build_recipients(fields: dict) -> str:
-    parts = []
+def build_recipients(fields: JsonDict) -> str:
+    parts: list[str] = []
     for i in ["1", "2", "3", "4"]:
         org = fields.get(f"Destinataire_{i}_Organisme", "")
         typ = fields.get(f"Destinataire_{i}_Type", "")
@@ -63,8 +66,8 @@ def build_recipients(fields: dict) -> str:
     return "<p>" + ", ".join(parts) + "</p>" if parts else ""
  
  
-def build_transfert(fields: dict) -> str:
-    parts = []
+def build_transfert(fields: JsonDict) -> str:
+    parts: list[str] = []
     for i in ["1", "2", "3", "4"]:
         org = fields.get(f"Destinataire_{i}_Organisme_hors_UE_", "")
         pays = fields.get(f"Destinataire_{i}_Pays_hors_UE_", "")
@@ -79,7 +82,7 @@ def build_transfert(fields: dict) -> str:
     return "<p>" + ", ".join(parts) + "</p>" if parts else ""
  
  
-def build_lawfulness(fields: dict) -> dict:
+def build_lawfulness(fields: JsonDict) -> JsonDict:
     base = fields.get("Base_de_liceite_du_traitement", [])  # a revoir
     result = {v: 0 for v in LAWFULNESS_MAP.values()}
     for item in base:
@@ -88,7 +91,7 @@ def build_lawfulness(fields: dict) -> dict:
     return result
  
  
-def build_data_collect(fields: dict) -> str:
+def build_data_collect(fields: JsonDict) -> str:
     items = [label for key, label in DATA_COLLECT_MAP.items() if fields.get(key)]
     if not items:
         return ""
@@ -96,7 +99,7 @@ def build_data_collect(fields: dict) -> str:
     return f"<br><strong>Données collectées</strong><ul>{liste}</ul>"
  
  
-def build_type_traitement(fields: dict) -> str:
+def build_type_traitement(fields: JsonDict) -> str:
     items = clean_list(fields.get("TYPE_DE_TRAITEMENT", []))
     if not items:
         return ""
@@ -108,13 +111,13 @@ def build_type_traitement(fields: dict) -> str:
 #      passé en argument (construit une seule fois par run, plus un appel API par fiche)
 # EN : Resolves related applications via the {grist_record_id: mercator_id} index
 #      passed as an argument (built once per run, not one API call per sheet)
-def liste_app(fields: dict, app_index: dict) -> list:
+def liste_app(fields: JsonDict, app_index: dict[int,int]) -> list[int]:
     liste_possible_app = [
         'Application_1_concernee_par_le_traitement',
         'Application_2_concernee_par_le_traitement',
         'Application_3_concernee_par_le_traitement',
     ]
-    applications = []
+    applications: list[int] = []
     for app in liste_possible_app:
         grist_id = fields.get(app)
         if grist_id and grist_id in app_index:
@@ -124,8 +127,8 @@ def liste_app(fields: dict, app_index: dict) -> list:
  
 # FR : Construit le payload Mercator (data-processings) pour une fiche Grist donnée
 # EN : Builds the Mercator payload (data-processings) for a given Grist sheet
-def payload_grist(record: dict, app_index: dict) -> dict:
-    fields = record.get("fields", {})
+def payload_grist(record: JsonDict, app_index: dict[int, int]) -> JsonDict:
+    fields :JsonDict = record.get("fields", {})
     lawfulness = build_lawfulness(fields)
     ma_date = datetime.date.today().isoformat()
  

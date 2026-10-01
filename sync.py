@@ -22,8 +22,9 @@ import requests
 import yaml
 from dotenv import load_dotenv
 load_dotenv(override=True)
-
+from connectors.config_types import JsonDict, SourceConfig
 from connectors import REGISTRY
+from typing import Any, cast
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ log = logging.getLogger(__name__)
 class MercatorClient: 
 # FR : Classe permettant de gérer une session Mercator et de faire appel aux méthodes associées
 # EN : Class that manages a Mercator session and exposes the related methods
-    def __init__(self, config: dict, dry_run: bool = False):
+    def __init__(self, config: JsonDict, dry_run: bool = False):
         base     = config["destination"]["mercator"] 
         # FR : Prend l'entrée mercator avec les différentes sous-entrées dans le fichier sources.yaml
         # EN : Get the mercator entry and its sub-entries from the sources.yaml file
@@ -79,12 +80,12 @@ class MercatorClient:
 
 # FR : Fonction qui permet de créer le dictionnaire "index" pour lier les objets mercator à leurs IDs de source
 # EN : Function that builds the "index" dictionary linking Mercator objects to their source IDs
-    def build_index(self, endpoint: str, mercator_key: str, source_name: str = None) -> dict[str, int]: 
+    def build_index(self, endpoint: str, mercator_key: str, source_name: str) -> dict[str, int]: 
         # FR : Prend en argument l'endpoint à viser (objets de mercator) et le nom de la source visée (XOA, vCenter...)
         # EN : Takes the target endpoint (Mercator objects) and the source name (XOA, vCenter...) as arguments
         requête = requests.get(f"{self.base_url}{endpoint}", headers=self.headers, timeout=10)
         requête.raise_for_status()
-        index = {}
+        index: dict[str,int] = {}
         for item in requête.json():
             ext_refs = item.get("ext_refs", "") or ""
             for ref in ext_refs.split("|"):
@@ -96,14 +97,17 @@ class MercatorClient:
 
     # FR : Récupère un objet Mercator par son chemin complet
     # EN : Fetches a Mercator object by its full path
-    def get(self, path: str) -> dict:
-    	requête = requests.get(f"{self.base_url}{path}", headers=self.headers, timeout=10)
-    	requête.raise_for_status()
-    	data = requête.json()
-    	return data.get("data", data) if isinstance(data, dict) else data
+    def get(self, path: str) -> Any :
+        requête = requests.get(f"{self.base_url}{path}", headers=self.headers, timeout=10)
+        requête.raise_for_status()
+        data = requête.json()
+        if isinstance(data,dict):
+            my_object = cast(JsonDict, data)
+            return my_object.get("data", my_object)
+        return data
     # FR : Met à jour un objet Mercator par son chemin complet
     # EN : Updates a Mercator object by its full path
-    def patch(self, path: str, payload: dict) -> dict:
+    def patch(self, path: str, payload: JsonDict) -> JsonDict:
         requête = requests.patch(f"{self.base_url}{path}", json=payload, headers=self.headers, timeout=10)
         if not requête.ok:
             log.error("PATCH %s failed (%s): %s", path, requête.status_code, requête.text)
@@ -112,7 +116,7 @@ class MercatorClient:
 
     # FR : Fonction qui effectue les requêtes pour créer les objets souhaités
     # EN : Function that performs the requests to create the desired objects
-    def upsert(self, endpoint: str, index: dict, key_value: str, payload: dict) -> int | None: 
+    def upsert(self, endpoint: str, index: dict[str,int], key_value: str, payload: JsonDict) -> int | None: 
         # FR : Prend en argument l'endpoint visé, le dictionnaire d'index ci-dessus, la clé source, et le payload mappé
         # EN : Takes the target endpoint, the index dict above, the source key, and the mapped payload
         if self.dry_run:
@@ -147,7 +151,7 @@ class MercatorClient:
 
 
 
-def handle_orphans(mercator, index, orphan_ids, mapping, sync_cfg):
+def handle_orphans(mercator:MercatorClient, index:dict[str,int], orphan_ids: set[str], mapping:JsonDict, sync_cfg:JsonDict)->None:
     # FR : Pour chaque VM absente du dernier pull, on tague sans supprimer ni renommer
     # EN : For each VM missing from the last pull, we tag it without deleting or renaming
     for source_key in orphan_ids:
@@ -161,7 +165,7 @@ def handle_orphans(mercator, index, orphan_ids, mapping, sync_cfg):
             if sync_cfg["orphan_tag"] in current_attributes_tokens:
                 continue  # FR : deja tague, on ne repasse pas dessus | EN : Already tagged, skipping 
 
-            payload = {
+            payload: JsonDict = {
                 "name": current_name,
                 "attributes": f"{current_attributes_str} {sync_cfg['orphan_tag']}".strip(),
             }
@@ -180,8 +184,8 @@ def handle_orphans(mercator, index, orphan_ids, mapping, sync_cfg):
 
 # FR : Fonction qui orchestre le tout, elle fait appel aux méthodes pour créer les mappings et mettre à jour ou créer les objets pour les sources souhaitées
 # EN : Function that orchestrates everything; it calls the methods to build mappings and update or create the objects for the target sources
-def sync_source(source_name: str, source_cfg: dict, mappings: dict,
-                mercator: MercatorClient, sync_cfg: dict) -> None: 
+def sync_source(source_name: str, source_cfg: SourceConfig, mappings: JsonDict,
+                mercator: MercatorClient, sync_cfg: JsonDict) -> None: 
     # FR : Fonction principale, prend le nom de la source, sa conf dans sources.yaml, le mapping d'URL selon le type de source, l'instance MercatorClient authentifiée et la section sync du yaml (orphelins, dry_run)
     # EN : Main function, takes the source name, its config in sources.yaml, the URL mapping for the source type, the authenticated MercatorClient instance, and the sync section of the yaml (orphans, dry_run)
 
@@ -202,17 +206,19 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
         log.error("Authentification échouée pour %s : %s", source_name, e)
         return
 
-    map = mappings.get(source_type, {})
-    cluster_cfg = map.get("cluster") 
-    vm_cfg      = map.get("logical_server")
-
+    mapping = mappings.get(source_type, {})
+    cluster_cfg = mapping.get("cluster") 
+    vm_cfg      = mapping.get("logical_server")
+    if not vm_cfg:
+        log.error("Pas de mapping logical_server pour le type %s", source_type)
+        return
     # --- FR : Index Mercator (une seule requête par endpoint) ---
     # --- EN : Mercator index (one request per endpoint) ---
 
     cluster_index = mercator.build_index(cluster_cfg["mercator_endpoint"], cluster_cfg["mercator_key"], source_name) if cluster_cfg else {}
-    vm_index      = mercator.build_index(vm_cfg["mercator_endpoint"],      vm_cfg["mercator_key"], source_name)      if vm_cfg      else {}
+    vm_index      = mercator.build_index(vm_cfg["mercator_endpoint"],      vm_cfg["mercator_key"], source_name)
 
-    seen_vm_keys = set()
+    seen_vm_keys: set[str] = set()
     mercator_cluster_id = None
     # --- Extract + Transform + Load ---
     try:
@@ -259,10 +265,9 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
             log.info("  VM : %s", payload_vm.get("name", vm_id))
 
 
-    if vm_cfg:
-        orphan_ids = set(vm_index.keys()) - seen_vm_keys
-        if orphan_ids:
-            handle_orphans(mercator, vm_index, orphan_ids, vm_cfg, sync_cfg)
+    orphan_ids = set(vm_index.keys()) - seen_vm_keys
+    if orphan_ids:
+        handle_orphans(mercator, vm_index, orphan_ids, vm_cfg, sync_cfg)
 
 
 # ---------------------------------------------------------------------------
@@ -270,7 +275,7 @@ def sync_source(source_name: str, source_cfg: dict, mappings: dict,
 # EN : Entry point
 # ---------------------------------------------------------------------------
 
-def main():
+def main()->None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config",  default="config/sources.yaml")
     parser.add_argument("--source",  default=None, help="Nom d'une source précise")
