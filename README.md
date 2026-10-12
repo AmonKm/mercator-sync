@@ -30,25 +30,21 @@
  
 Ce repo Gihtub est une **réponse** à un besoin principal :
  
-Alimenter [**Mercator**](https://github.com/sourcentis/mercator) avec une solution de virtualisation établi dans une organisation.
+Alimenter [**Mercator**](https://github.com/sourcentis/mercator) avec une solution de virtualisation.
  
 Dans mon/notre *contexte*, nous avions notamment besoin de l'ensemble des VMs et des clusters supportant des applications du système.
  
-Faisant suite à différents échanges, le simple script d'alimentation s'est transformé en **orchestrateur** pour qu'il soit modulaire et pour permettre une utilisation généralisé en cas de changement de solution de virtualisation.
- 
-Ainsi, ce repo contient un orchestrateur permettant d'alimenter l'ensemble des clusters et des VMs par clusters sur trois sources : **Vcenter, XOA, Proxmox.**
+Ainsi, ce repo contient un orchestrateur permettant d'alimenter l'ensemble des clusters et des VMs par clusters sur trois sources : 
+- **Vcenter,** 
+- **XOA,** 
+- **Proxmox.**
  
 Egalement, il existe un script pour permettre la synchronisation de traitement Grist vers mercator.
  
 ---
  
 ### Synchronisation des machines virtuelles et des clusters de différentes sources vers Mercator
- 
-### Sources :
- 
-- Vcenter (VMware)
-- XOA (XCP-ng)
-- Proxmox
+
 ### Fonctionnement
  
 <img width="1312" height="1352" alt="github_schemzz drawio" src="https://github.com/user-attachments/assets/aa347dc4-fb35-4885-a4ed-d09a4c3f3e2f" />
@@ -163,13 +159,14 @@ Le mappage des applications (`Mercator_mappage`) est mis à jour par upsert : le
  
 This GitHub repository was created to address the following need:
  
-Populate [**Mercator**](https://github.com/sourcentis/mercator) using an organization's existing virtualization solution.
+Populate [**Mercator**](https://github.com/sourcentis/mercator) using a virtualization solution.
  
 In our context, we needed to synchronize all virtual machines and clusters hosting applications within the information system.
- 
-Following several discussions, what initially started as a simple synchronization script evolved into a modular **orchestrator**, making it reusable and allowing it to support different virtualization platforms if the infrastructure changes.
- 
-As a result, this repository contains an orchestrator capable of synchronizing clusters and their virtual machines from three different sources: **vCenter, XOA, and Proxmox**.
+  
+As a result, this repository contains an orchestrator capable of synchronizing clusters and their virtual machines from three different sources:
+- **vCenter,** 
+- **XOA,** 
+- **and Proxmox**.
  
 It also includes a script to synchronize a **Grist processing register** with Mercator.
  
